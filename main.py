@@ -5,8 +5,8 @@ import machine
 from machine import Pin, PWM
 
 # Yes, these could be in another file. But on the Pico! So no more secure. :)
-ssid = 'IEEE'
-password = 'Ilovesolder'
+ssid = ''
+password = ''
 
 # Define pins to pin motors!
 Mot_A_Forward = PWM(Pin(18, Pin.OUT))
