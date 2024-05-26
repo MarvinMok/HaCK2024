@@ -14,10 +14,10 @@ def connectMQTT(ip):
 
     client  = MQTTClient(
         client_id=b"marvin",
-        server="2d99e9a882c2434786c1cdb39f29154b.s1.eu.hivemq.cloud",
-        port=8883,
-        user="marvin",
-        password="Picow123",
+        server="",
+        port=0,
+        user="",
+        password="",
         keepalive=3000, 
         ssl=sslWrap()     
     )
