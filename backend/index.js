@@ -10,17 +10,17 @@ const { Server } = require("socket.io")
 
 
 const io = new Server(server);
-const HOST = "2d99e9a882c2434786c1cdb39f29154b.s1.eu.hivemq.cloud"
-const PORT = 8883
+const HOST = ""
+const PORT = ""
 const CLIENTID = "frontend"
-const CONNECTURL = "mqtts://2d99e9a882c2434786c1cdb39f29154b.s1.eu.hivemq.cloud:8883"
+const CONNECTURL = ""
 const TOPIC = "test1";
 const client = MQTT.connect(CONNECTURL, {
   CLIENTID ,
   clean: true,
   connectTimeout: 3000,
-  username: "frontend",
-  password: "Picow123",
+  username: "",
+  password: "",
   reconnectPeriod: 10000,
 
 })
