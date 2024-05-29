@@ -11,13 +11,12 @@ class sslWrap:
         self.wrap_socket = ssl.wrap_socket
 
 def connectMQTT(ip):
-
     client  = MQTTClient(
-        client_id=b"marvin",
-        server="",
-        port=0,
-        user="",
-        password="",
+        client_id=b"ISwearToFuckingGod",
+        server="378861656db74bd1becac997eb01cb13.s1.eu.hivemq.cloud",
+        port=8883,
+        user="picow",
+        password="Raspberry1",
         keepalive=3000, 
         ssl=sslWrap()     
     )

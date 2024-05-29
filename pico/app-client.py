@@ -2,18 +2,22 @@
 
 
 import socket
+import network
+import ssl
+from time import sleep
+# import libclient
 
-
-import libclient
-
-ssid = 'YAET'
-password = ',6961sN9'
+ssid = 'UCLA_WEB'
+password = ''
 
 def connect():
     #Connect to WLAN
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
-    wlan.connect(ssid, password)
+    if password:
+        wlan.connect(ssid, password)
+    else:
+        wlan.connect(ssid)
     while wlan.isconnected() == False:
         print('Waiting for connection...')
         sleep(1)
@@ -29,29 +33,85 @@ def create_request(action, value):
             content=dict(action=action, value=value),
         )
     else:
+        string = action + value
         return dict(
             type="binary/custom-client-binary-type",
             encoding="binary",
-            content=bytes(action + value, encoding="utf-8"),
+            content=bytes(string, "utf-8"),
         )
 
+
+# def start_connection(host, port, request):
+#     addr = (host, port)
+#     print(f"Starting connection to {addr}")
+#     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#     sock.setblocking(False)
+#     sock.connect_ex((host,port))
+#     events = selectors.EVENT_READ | selectors.EVENT_WRITE
+#     message = libclient.Message(sel, sock, addr, request)
+#     sel.register(sock, events, data=message)
+
+
+# host = "378861656db74bd1becac997eb01cb13.s1.eu.hivemq.cloud"  # The server's hostname or IP address
+# port = 8883
+# action = "topic1"   # action, value
+# value = "morpheus"
+# request = create_request(action, value)
+# start_connection(host, port, request)
+
+
+def create_request(action, value):
+    # Example request creation, modify as needed
+    return f"{action} {value}"
 
 def start_connection(host, port, request):
     addr = (host, port)
     print(f"Starting connection to {addr}")
+    
+    # Create a socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setblocking(False)
-    sock.connect_ex(addr)
-    events = selectors.EVENT_READ | selectors.EVENT_WRITE
-    message = libclient.Message(sel, sock, addr, request)
-    sel.register(sock, events, data=message)
+    
+    # Set timeout for the socket
+    sock.settimeout(10)
+    
+    try:
+        # Connect to the server
+        sock.connect(addr)
+    except socket.error as e:
+        print(f"Error connecting to {addr}: {e}")
+        return
+    
+    # Wrap socket with SSL
+    context = ssl.create_default_context()
+    try:
+        sock = context.wrap_socket(sock, server_hostname=host)
+    except ssl.SSLError as e:
+        print(f"SSL error: {e}")
+        return
+    
+    print("Connection established!")
+    
+    # Send the request
+    try:
+        sock.sendall(request.encode())
+        print("Request sent successfully!")
+    except socket.error as e:
+        print(f"Error sending request: {e}")
+    finally:
+        sock.close()
 
-
-host = "192.168.137.253"  # The server's hostname or IP address
-port =  4000
-action, value = "search", "morpheus"
+# Connection parameters
+host = "378861656db74bd1becac997eb01cb13.s1.eu.hivemq.cloud"
+port = 8883
+action = "topic1"
+value = "morpheus"
 request = create_request(action, value)
+
+# Start connection
 start_connection(host, port, request)
+
+
+
 
 try:
     while True:
