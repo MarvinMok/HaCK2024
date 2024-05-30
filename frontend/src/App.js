@@ -1,24 +1,36 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 
-function App() {
+const App = () => {
+
   const [messageReceived, setMessageReceived] = useState("");
   const interval = useRef(null);
 
+  // For Receving Message
+  // Will be used for sensor data
   useEffect(() => {
     fetch("http://localhost:8000/message")
       .then((res) => res.json())
       .then((data) => setMessageReceived(data.message));
   }, []);
 
+  // Controls for Rover
+
   useEffect(() => {
+    // when any key is pressed handleKeyDown is pressed 
     const handleKeyDown = (event) => {
       try {
         if (event.key === 'a' && interval.current === null) {
-          interval.current = setInterval(()=>{sendMessageLeft()}, 500); // Set interval to send message every 0.5 seconds
+          interval.current = setInterval(()=>{sendLeft()}, 500); // Set interval to send message every 0.5 seconds
         }
-        if (event.key === 'd' && interval.current === null) {
-          interval.current = setInterval(()=>{sendMessageRight()}, 500); // Set interval to send message every 0.5 seconds
+        else if (event.key === 'd' && interval.current === null) {
+          interval.current = setInterval(()=>{sendRight()}, 500); 
+        }
+        else if (event.key === 'w' && interval.current === null) {
+          interval.current = setInterval(()=>{sendForward()}, 500); 
+        }
+        else if (event.key === 's' && interval.current === null) {
+          interval.current = setInterval(()=>{sendBackward()}, 500); 
         }
       }
       catch (error) {
@@ -28,6 +40,18 @@ function App() {
   
     const handleKeyUp = (event) => {
       if (event.key === 'a' && interval.current !== null) {
+        clearInterval(interval.current);
+        interval.current = null;
+      }
+      else if (event.key === 'd' && interval.current !== null) {
+        clearInterval(interval.current);
+        interval.current = null;
+      }
+      if (event.key === 'w' && interval.current !== null) {
+        clearInterval(interval.current);
+        interval.current = null;
+      }
+      else if (event.key === 's' && interval.current !== null) {
         clearInterval(interval.current);
         interval.current = null;
       }
@@ -43,7 +67,10 @@ function App() {
   }, []);
 
 
-  const sendMessageLeft = async () => {
+
+  // Functions to send message to broker thru server
+
+  const sendLeft = async () => {
     try {
       const response = await fetch('http://localhost:8000/send-message', {
         method: 'POST',
@@ -60,7 +87,7 @@ function App() {
   };
 
 
-  const sendMessageRight = async () => {
+  const sendRight = async () => {
     try {
       const response = await fetch('http://localhost:8000/send-message', {
         method: 'POST',
@@ -76,66 +103,55 @@ function App() {
     }
   };
 
+  const sendBackward = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ topic: "direction", message: "backward" }),
+      });
+      const data = await response.json();
+      console.log('Response from server:', data);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
+  const sendForward = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ topic: "direction", message: "forward" }),
+      });
+      const data = await response.json();
+      console.log('Response from server:', data);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
+
+
+  // CODE THAT IS BEING RENDERED 
 
   return (
     <div className="App">
-      <h1>{messageReceived}</h1>
-      <h1>Send Message to Server</h1>
+      <h3>{messageReceived}</h3>
+      <h1>Control Rover</h1>
       <div>
-        <button onClick={sendMessageRight}>Right</button>
+        <p>W</p>
+        <p> &lt;-- A  D --&gt;</p>
+        <p>S</p>
       </div>
     </div>
   );
+
 }
 
 export default App
 
-
-// import React, { useState, useEffect, useRef } from 'react';
-
-// function App() {
-//   const [message, setMessage] = useState('');
-//   const intervalRef = useRef(null);
-
-//   const sendMessage = () => {
-//     console.log('Message sent');
-//     // You can replace the console.log with your message sending logic
-//   };
-
-//   const handleKeyDown = (event) => {
-//     // Check if the specific key (e.g., 'a') is pressed
-//     if (event.key === 'a' && intervalRef.current === null) {
-//       intervalRef.current = setInterval(sendMessage, 500); // Set interval to send message every 0.5 seconds
-//     }
-//   };
-
-//   const handleKeyUp = (event) => {
-//     // Check if the specific key (e.g., 'a') is released
-//     if (event.key === 'a' && intervalRef.current !== null) {
-//       clearInterval(intervalRef.current);
-//       intervalRef.current = null;
-//     }
-//   };
-
-//   useEffect(() => {
-//     window.addEventListener('keydown', handleKeyDown);
-//     window.addEventListener('keyup', handleKeyUp);
-
-//     return () => {
-//       window.removeEventListener('keydown', handleKeyDown);
-//       window.removeEventListener('keyup', handleKeyUp);
-//       if (intervalRef.current !== null) {
-//         clearInterval(intervalRef.current);
-//       }
-//     };
-//   }, []);
-
-//   return (
-//     <div>
-//       <p>Press and hold the "a" key to send a message every 0.5 seconds</p>
-//       <p>{message}</p>
-//     </div>
-//   );
-// }
-
-// export default App;

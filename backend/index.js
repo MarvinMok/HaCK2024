@@ -52,7 +52,10 @@ APP.use(express.json());
 client.on('connect', async () => {
   console.log("connected")
   client.subscribe([TOPIC], () => {
-    console.log('Echo', "Subscribed");
+    console.log('Subscribed to', TOPIC);
+  })
+  client.subscribe("direction", () => {
+    console.log("Subsribed to direction")
   })
   // client.publish(TOPIC, 'Hello there motherfucker')
 })
@@ -62,21 +65,19 @@ client.on('message', (TOPIC, payload) => {
   latest = payload.toString()
 })
 
-//MQTT LISTEN
-// server.listen(80, () => console.log("server started"))
 
 APP.listen(8000, () => {
   console.log('Server is running on port 8000');
 })
 
 APP.get('/message', (req, res) => {
-  res.json({ message: "Hello from server!" });
+  res.json({ message: "Fuck you frontend" });
 });
 
 APP.post('/send-message', (req, res) => {
   const { message } = req.body;
   console.log('Received message from frontend:', message);
-
+  client.publish("direction", message);
   // You can now publish this message to your MQTT broker if needed
   // client.publish(TOPIC, message);
 
