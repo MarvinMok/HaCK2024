@@ -1,5 +1,5 @@
 
-
+const dotenv = require('dotenv').config()
 const cors = require("cors")
 const express = require("express")
 const http = require('http')
@@ -10,17 +10,14 @@ const { Server } = require("socket.io")
 
 
 const io = new Server(server);
-const HOST = ""
-const PORT = ""
 const CLIENTID = "frontend"
-const CONNECTURL = ""
 const TOPIC = "test1";
-const client = MQTT.connect(CONNECTURL, {
+const client = MQTT.connect(process.env.CONNECT_URL, {
   CLIENTID ,
   clean: true,
   connectTimeout: 3000,
-  username: "",
-  password: "",
+  username: process.env.MQTT_USER,
+  password: process.env.MQTT_PWD,
   reconnectPeriod: 10000,
 
 })
@@ -60,3 +57,20 @@ client.on('message', (TOPIC, payload) => {
 })
 
 server.listen(80, () => console.log("server started"))
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+async function demo() {
+  for (let i = 0; i < 5; i++) {
+      console.log(`Waiting ${i} seconds...`);
+      client.publish('test2', 'Hello, pico!');
+      await sleep(1000);
+
+  }
+}
+
+demo();
+
