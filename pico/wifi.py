@@ -76,4 +76,5 @@ try:
         publish(b"test1", b"hello world")
 finally:
     client.disconnect()
+    machine.reset()
 
