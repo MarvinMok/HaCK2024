@@ -6,10 +6,8 @@ try:
     adc = ADC(Pin(26))
     pwm.duty_u16(32000)
     while True:
-        freq = adc.read_u16()
-        freq = freq * 2000 // 65025
+        freq = (adc.read_u16() * 360 // 65025) % 360
         pwm.freq(freq)
-
         print(freq)
         time.sleep(0.1)
 finally:

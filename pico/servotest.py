@@ -1,16 +1,24 @@
 from servo import Servo
 from machine import Pin, ADC
+import machine
 import time
 
-sg90_servo = Servo(pin=16)  #To be changed according to the pin used
+s1 = Servo(pin=16)  #To be changed according to the pin used
+s2 = Servo(pin=17)
 adc = ADC(Pin(26))
-deg = 0
-sg90_servo.move(0)
+d1 = d2 = 0
+s1.move(0)
+s2.move(0)
 time.sleep(0.5)
-while True:
-    temp = adc.read_u16() * 180 // 65535
-    #print(temp, adc.read_u16() * 180)
-    if temp != deg:        
-        deg = temp
-        sg90_servo.move(deg)  # turns the servo to 0°.
-    time.sleep(0.1)
+try:
+    while True:
+        temp = adc.read_u16() * 180 // 65535
+        print(temp)
+        if temp != d1:        
+            d1 = temp
+            s1.move(d1)  # turns the servo to 0°.
+            s2.move(d1)
+        time.sleep(0.5)
+finally:
+    pass
+    machine.reset()

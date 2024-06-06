@@ -18,8 +18,6 @@ const client = MQTT.connect(process.env.CONNECT_URL, {
   connectTimeout: 3000,
   username: process.env.MQTT_USER,
   password: process.env.MQTT_PWD,
-  username: "node-server",
-  password: "Node-server1",
   reconnectPeriod: 10000,
 })
 

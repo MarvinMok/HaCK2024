@@ -1,12 +1,11 @@
 import network
-import socket
 from time import sleep
 import machine
 from machine import Pin, PWM
+import ssl
+from simple import MQTTClient
 
 # Yes, these could be in another file. But on the Pico! So no more secure. :)
-ssid = 'YAET'
-password = ',6961sN9'
 
 # Define pins to pin motors!
 Mot_A_Forward = PWM(Pin(18, Pin.OUT))
@@ -16,7 +15,7 @@ Mot_B_Back = PWM(Pin(21, Pin.OUT))
 
 led = Pin('LED', Pin.OUT)
 FREQ = 1000
-SPEED = 40000 #0 to 2^16 -1
+SPEED = 65500 #0 to 2^16 -1
 
 def move_forward():
     Mot_A_Forward.duty_u16(SPEED)
@@ -52,117 +51,107 @@ def move_right():
     Mot_A_Back.duty_u16(SPEED)
     Mot_B_Back.duty_u16(0)
 
-
-#Stop the robot as soon as possible
-move_stop()
-    
-def connect():
-    #Connect to WLAN
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    wlan.connect(ssid, password)
-    while wlan.isconnected() == False:
-        print('Waiting for connection...')
-        sleep(1)
-    ip = wlan.ifconfig()[0]
-    print(f'Connected on {ip}')
-    return ip
-    
-def open_socket(ip):
-    # Open a socket
-    address = (ip, 4000)
-    connection = socket.socket()
-    connection.bind(address)
-    connection.listen(1)
-    return connection
-
-def webpage():
-    #Template HTML
-    html = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-            <title>Zumo Robot Control</title>
-            </head>
-            <center><b>
-            <form action="./forward">
-            <input type="submit" value="Forward" style="height:120px; width:120px" />
-            </form>
-            <table><tr>
-            <td><form action="./left">
-            <input type="submit" value="Left" style="height:120px; width:120px" />
-            </form></td>
-            <td><form action="./stop">
-            <input type="submit" value="Stop" style="height:120px; width:120px" />
-            </form></td>
-            <td><form action="./right">
-            <input type="submit" value="Right" style="height:120px; width:120px" />
-            </form></td>
-            </tr></table>
-            <form action="./back">
-            <input type="submit" value="Back" style="height:120px; width:120px" />
-            </form>
-            </body>
-            </html>
-            """
-    return str(html)
-
-def serve(connection):
-    #Start web server
-    while True:
-        client = connection.accept()[0]
-        request = client.recv(1024)
-        request = str(request)
-        try:
-            request = request.split()[1]
-        except IndexError:
-            pass
-        if request == '/forward?':
-            move_forward()
-        elif request =='/left?':
-            move_left()
-        elif request =='/stop?':
-            move_stop()
-        elif request =='/right?':
-            move_right()
-        elif request =='/back?':
-            move_backward()
-        html = webpage()
-        client.send("hello world")
-        client.close()
-
 def motor_setup():
     Mot_A_Forward.freq(FREQ)
     Mot_A_Back.freq(FREQ)
     Mot_B_Forward.freq(FREQ)
     Mot_B_Back.freq(FREQ)
 
+#Stop the robot as soon as possible    
+
+try:
+    from constants import *
+except:
+    WIFI_USER = ""
+    WIFI_PWD = ""
+    MQTT_SERVER = ""
+    MQTT_USER = ""
+    MQTT_PWD = ""
+    print("no constants")
+
+
+class sslWrap:
+    def __init__(self):
+        self.wrap_socket = ssl.wrap_socket
+
+def connectMQTT():
+
+    client  = MQTTClient(
+        client_id=b"marvin",
+        server=MQTT_SERVER,
+        port=8883,
+        user=MQTT_USER,
+        password=MQTT_PWD,
+        keepalive=3000, 
+        ssl=sslWrap()     
+    )
+    client.connect()
+    print("connected to MQTT")
+    return client
+
+def connectInternet(ssid, password):
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(ssid, password)
+    while wlan.isconnected() == False:
+        print(wlan.status(), network.STAT_CONNECTING, network.STAT_CONNECT_FAIL, network.STAT_WRONG_PASSWORD, network.STAT_NO_AP_FOUND)
+        print('Waiting for connection...')
+        sleep(1)
+    ip = wlan.ifconfig()[0]
+    print(f'Connected on {ip}')
+    return ip
+
+def cb(topic, msg):
+    if msg == b"forward":
+        print("moving forwards")
+        move_forward()
+    elif msg == b"backward": 
+        move_backward()
+    elif msg == b"left":
+        move_left()
+    elif msg == b"right": #right
+        move_right()
+    elif msg == b"stop":
+        move_stop()
+    print(topic, ", ", msg)
+
+# try:
+#     motor_setup()
+#     led.value(1)
+#     while True:
+#         move_stop()
+#         sleep(1)
+#         move_forward()
+#         sleep(1)
+#         move_backward()
+#         sleep(1)
+#         move_left()
+#         sleep(1)
+#         move_right()
+#         sleep(1)
+# finally:
+#     move_stop()
+#     led.value(0)
+#     #machine.reset()
 
 try:
     led.value(1)
-    motor_setup()
-    ip = connect()
-    connection = open_socket(ip)
-    serve(connection)
-    
-    # while True:  
-    #     move_forward()
-    #     sleep(1)
-    #     move_stop()
-    #     sleep(1)
-    #     move_backward()
-    #     sleep(1)
-    #     move_stop()
-    #     sleep(1)
-    #     move_right()
-    #     sleep(0.5)
-    #     move_left()
-    #     sleep(0.5)
-    #     move_stop()
-    #     sleep(1)
-        
+    ssid = WIFI_USER
+    password = WIFI_PWD
+    move_stop()
+    ip = connectInternet(ssid, password)
+    client = connectMQTT()
+    client.set_callback(cb)
 
+    while True: 
+        #sleep(0.005)
+        client.subscribe("direction")
+    #   client.publish(b"test1", b"hello world")
 finally:
+    client.disconnect()
     move_stop()
     led.value(0)
+    machine.reset()
+
+    
     

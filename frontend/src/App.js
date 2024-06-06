@@ -4,7 +4,7 @@ import "./App.css";
 const App = () => {
 
   const [messageReceived, setMessageReceived] = useState("");
-  const interval = useRef(null);
+  const keydown = useRef(false);
 
   // For Receving Message
   // Will be used for sensor data
@@ -18,19 +18,24 @@ const App = () => {
 
   useEffect(() => {
     // when any key is pressed handleKeyDown is pressed 
+    console.log("key Pressed")
     const handleKeyDown = (event) => {
       try {
-        if (event.key === 'a' && interval.current === null) {
-          interval.current = setInterval(()=>{sendLeft()}, 500); // Set interval to send message every 0.5 seconds
+        if (event.key === 'a' && keydown.current === false) {
+          sendLeft(); // Set interval to send message every 0.5 seconds
+          keydown.current = true;
         }
-        else if (event.key === 'd' && interval.current === null) {
-          interval.current = setInterval(()=>{sendRight()}, 500); 
+        else if (event.key === 'd' && keydown.current === false) {
+          sendRight(); 
+          keydown.current = true;
         }
-        else if (event.key === 'w' && interval.current === null) {
-          interval.current = setInterval(()=>{sendForward()}, 500); 
+        else if (event.key === 'w' && keydown.current === false) {
+          sendForward(); 
+          keydown.current = true;
         }
-        else if (event.key === 's' && interval.current === null) {
-          interval.current = setInterval(()=>{sendBackward()}, 500); 
+        else if (event.key === 's' && keydown.current === false) {
+          sendBackward(); 
+          keydown.current = true;
         }
       }
       catch (error) {
@@ -39,22 +44,10 @@ const App = () => {
     }
   
     const handleKeyUp = (event) => {
-      if (event.key === 'a' && interval.current !== null) {
-        clearInterval(interval.current);
-        interval.current = null;
-      }
-      else if (event.key === 'd' && interval.current !== null) {
-        clearInterval(interval.current);
-        interval.current = null;
-      }
-      if (event.key === 'w' && interval.current !== null) {
-        clearInterval(interval.current);
-        interval.current = null;
-      }
-      else if (event.key === 's' && interval.current !== null) {
-        clearInterval(interval.current);
-        interval.current = null;
-      }
+      if (event.key === 'w' || event.key === 'a' || event.key === 's' || event.key === 'd') {
+        sendStop();
+        keydown.current = false;
+      }   
     };
   
       window.addEventListener('keydown', handleKeyDown);
@@ -69,6 +62,22 @@ const App = () => {
 
 
   // Functions to send message to broker thru server
+
+  const sendStop = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ topic: "direction", message: "stop" }),
+      });
+      const data = await response.json();
+      console.log('Response from server:', data);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
 
   const sendLeft = async () => {
     try {

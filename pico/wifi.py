@@ -70,10 +70,11 @@ try:
     publish(b"test1", b"hello world")
     sleep(2)
     client.set_callback(cb)
-    while True:
-        subscribe('test2')
-        sleep(1)
-        publish(b"test1", b"hello world")
+ 
+    while True: 
+        sleep(0.5)
+        subscribe("direction")
+    #    publish(b"test1", b"hello world")
 finally:
     client.disconnect()
     machine.reset()
