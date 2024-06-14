@@ -1,9 +1,13 @@
 import network
+import time
 from time import sleep
 import machine
 from machine import Pin, PWM
 import ssl
 from simple import MQTTClient
+from hcsr04 import HCSR04
+
+
 
 # Yes, these could be in another file. But on the Pico! So no more secure. :)
 
@@ -12,6 +16,8 @@ Mot_A_Forward = PWM(Pin(18, Pin.OUT))
 Mot_A_Back = PWM(Pin(19, Pin.OUT))
 Mot_B_Forward = PWM(Pin(20, Pin.OUT))
 Mot_B_Back = PWM(Pin(21, Pin.OUT))
+
+sensor = HCSR04(trigger_pin=16, echo_pin=15, echo_timeout_us=10000)
 
 led = Pin('LED', Pin.OUT)
 FREQ = 1000
@@ -139,14 +145,18 @@ try:
     ssid = WIFI_USER
     password = WIFI_PWD
     move_stop()
-    ip = connectInternet(ssid, password)
+    connectInternet(ssid, password)
     client = connectMQTT()
     client.set_callback(cb)
-
+    last_time = time.ticks_ms()
     while True: 
-        #sleep(0.005)
+        cur_time = time.ticks_ms()
+        if (time.ticks_diff(cur_time, last_time) > 1000):
+            client.publish(b"ultrasonic", str(sensor.distance_cm()).encode('utf-8'))
+            last_time = cur_time
         client.subscribe("direction")
-    #   client.publish(b"test1", b"hello world")
+        sleep(0.001)
+        #client.publish(b"test1", b"hello world")
 finally:
     client.disconnect()
     move_stop()

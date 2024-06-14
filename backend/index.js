@@ -11,7 +11,6 @@ const { Server } = require("socket.io")
 
 const io = new Server(server);
 const CLIENTID = "frontend"
-const TOPIC = "test1";
 const client = MQTT.connect(process.env.CONNECT_URL, {
   CLIENTID,
   clean: true,
@@ -48,11 +47,8 @@ APP.use(express.json());
 
 client.on('connect', async () => {
   console.log("connected")
-  client.subscribe([TOPIC], () => {
-    console.log('Subscribed to', TOPIC);
-  })
-  client.subscribe("direction", () => {
-    console.log("Subsribed to direction")
+  client.subscribe("ultrasonic", () => {
+    console.log("Subscribed to direction")
   })
   // client.publish(TOPIC, 'Hello there motherfucker')
 })
