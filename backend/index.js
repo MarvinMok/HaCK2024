@@ -67,12 +67,18 @@ APP.get('/message', (req, res) => {
   res.json({ message: "Fuck you frontend" });
 });
 
-APP.post('/send-message', (req, res) => {
+APP.post('/send-direction', (req, res) => {
   const { message } = req.body;
   console.log('Received message from frontend:', message);
   client.publish("direction", message);
-  // You can now publish this message to your MQTT broker if needed
-  // client.publish(TOPIC, message);
 
   res.status(200).json({ status: 'Message received' });
 });
+
+APP.post('/send-arm-value', (req, res) => {
+  const { message } = req.body;
+  console.log('Received message from frontend:', message);
+  client.publish("arm", message);
+
+  res.status(200).json({ status: 'Message received' });
+})

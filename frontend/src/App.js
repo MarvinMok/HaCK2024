@@ -1,10 +1,33 @@
 import React, { useState, useEffect, useRef } from "react";
+import SliderComponent from "./SliderComponent";
 import "./App.css";
 
 const App = () => {
 
   const [messageReceived, setMessageReceived] = useState("");
   const keydown = useRef(false);
+  const [value, setValue] = useState(1500);
+  // constand changing slider value
+  const handleChange = (newValue) => {
+    setValue(newValue);
+  };
+
+  // Slider change once released
+  const sendArmValue = async (newValue) => {
+    try {
+      const response = await fetch('http://localhost:8000/send-arm-value', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ topic: "arm", message: newValue }),
+      });
+      const data = await response.json();
+      console.log('Response from server:', data);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
 
   // For Receving Message
   // Will be used for sensor data
@@ -13,6 +36,8 @@ const App = () => {
       .then((res) => res.json())
       .then((data) => setMessageReceived(data.message));
   }, []);
+
+
 
   // Controls for Rover
 
@@ -39,12 +64,14 @@ const App = () => {
         }
       }
       catch (error) {
-        
+        console.log(`Error handling keydown: {event.key}`)
       }
     }
   
     const handleKeyUp = (event) => {
-      if (event.key === 'w' || event.key === 'a' || event.key === 's' || event.key === 'd') {
+      if (event.key === 'w' || event.key === 'a' || event.key === 's' || event.key === 'd' 
+      // || event.key === 'ArrowUp' || event.key === 'ArrowDown'
+      ) {
         sendStop();
         keydown.current = false;
       }   
@@ -65,7 +92,7 @@ const App = () => {
 
   const sendStop = async () => {
     try {
-      const response = await fetch('http://localhost:8000/send-message', {
+      const response = await fetch('http://localhost:8000/send-direction', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +108,7 @@ const App = () => {
 
   const sendLeft = async () => {
     try {
-      const response = await fetch('http://localhost:8000/send-message', {
+      const response = await fetch('http://localhost:8000/send-direction', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -98,7 +125,7 @@ const App = () => {
 
   const sendRight = async () => {
     try {
-      const response = await fetch('http://localhost:8000/send-message', {
+      const response = await fetch('http://localhost:8000/send-direction', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +141,7 @@ const App = () => {
 
   const sendBackward = async () => {
     try {
-      const response = await fetch('http://localhost:8000/send-message', {
+      const response = await fetch('http://localhost:8000/send-direction', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,7 +157,7 @@ const App = () => {
 
   const sendForward = async () => {
     try {
-      const response = await fetch('http://localhost:8000/send-message', {
+      const response = await fetch('http://localhost:8000/send-direction', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -150,11 +177,19 @@ const App = () => {
 
   return (
     <div className="App">
-      <h3>{messageReceived}</h3>
+      <div className>
+        <h1>Arm Slider</h1>
+        <SliderComponent
+          value={value}
+          onChange={handleChange}
+          onAfterChange={sendArmValue}
+        />
+      </div>
+      {/* <h3>{messageReceived}</h3> */}
       <h1>Control Rover</h1>
       <div>
         <p>W</p>
-        <p> &lt;-- A  D --&gt;</p>
+        <p> A  D </p>
         <p>S</p>
       </div>
     </div>
@@ -162,5 +197,5 @@ const App = () => {
 
 }
 
-export default App
+export default App;
 
