@@ -4,12 +4,24 @@ from time import sleep
 import machine
 from machine import Pin, PWM
 import ssl
-from simple import MQTTClient
+from mqtt.simple import MQTTClient
 from hcsr04 import HCSR04
 
 
 
-# Yes, these could be in another file. But on the Pico! So no more secure. :)
+#servo constants
+import utime
+PWM_MIN = 900
+PWM_MAX = 2400
+MIN = PWM_MIN*10**3
+MAX = PWM_MAX*10**3
+MID = 1500000
+
+led = Pin(25,Pin.OUT)
+pwm = PWM(Pin(15))
+
+pwm.freq(50)
+pwm.duty_ns(MID)
 
 # Define pins to pin motors!
 Mot_A_Forward = PWM(Pin(18, Pin.OUT))
@@ -29,13 +41,11 @@ def move_forward():
     Mot_A_Back.duty_u16(0)
     Mot_B_Back.duty_u16(0)
 
-    
 def move_backward():
     Mot_A_Forward.duty_u16(0)
     Mot_B_Forward.duty_u16(0)
     Mot_A_Back.duty_u16(SPEED)
     Mot_B_Back.duty_u16(SPEED)
-
 
 def move_stop():
     Mot_A_Forward.duty_u16(0)
@@ -43,13 +53,11 @@ def move_stop():
     Mot_A_Back.duty_u16(0)
     Mot_B_Back.duty_u16(0)
 
-
 def move_left():
     Mot_A_Forward.duty_u16(SPEED)
     Mot_B_Forward.duty_u16(0)
     Mot_A_Back.duty_u16(0)
     Mot_B_Back.duty_u16(SPEED)
-
 
 def move_right():
     Mot_A_Forward.duty_u16(0)
@@ -63,16 +71,23 @@ def motor_setup():
     Mot_B_Forward.freq(FREQ)
     Mot_B_Back.freq(FREQ)
 
+def servo_move_forward():
+    pwm.duty_ns(MIN)
+    utime.sleep(1)
+    
+def servo_move_backward():
+    pwm.duty_ns(MAX)
+    utime.sleep(1)
 #Stop the robot as soon as possible    
 
 try:
     from constants import *
 except:
-    WIFI_USER = ""
-    WIFI_PWD = ""
-    MQTT_SERVER = ""
-    MQTT_USER = ""
-    MQTT_PWD = ""
+    WIFI_USER = "UCLA_WEB"
+    WIFI_PWD = "uclaaiaa1234"
+    MQTT_SERVER = "815b71e535944e428fe29b44048361c7.s1.eu.hivemq.cloud:8883"
+    MQTT_USER = "hack2024"
+    MQTT_PWD = "AVhack04"
     print("no constants")
 
 
@@ -98,7 +113,7 @@ def connectMQTT():
 def connectInternet(ssid, password):
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
-    wlan.connect(ssid, password)
+    wlan.connect(ssid) #, password)
     while wlan.isconnected() == False:
         print(wlan.status(), network.STAT_CONNECTING, network.STAT_CONNECT_FAIL, network.STAT_WRONG_PASSWORD, network.STAT_NO_AP_FOUND)
         print('Waiting for connection...')
@@ -119,6 +134,11 @@ def cb(topic, msg):
         move_right()
     elif msg == b"stop":
         move_stop()
+    elif msg == b"rotateforward":
+        servo_move_forward()
+    elif msg == b"rotatebackward":
+        servo_move_backward()
+
     print(topic, ", ", msg)
 
 # try:
@@ -156,8 +176,9 @@ try:
             last_time = cur_time
         client.subscribe("direction")
         sleep(0.001)
-        #client.publish(b"test1", b"hello world")
-finally:
+        client.publish(b"test1", b"hello world")
+    print("here")
+except:
     client.disconnect()
     move_stop()
     led.value(0)

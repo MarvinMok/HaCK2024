@@ -23,7 +23,7 @@ const client = MQTT.connect(process.env.CONNECT_URL, {
 
 var latest = {};
 
-client.on("error", function(error){console.log("can't connect: "+error)})
+client.on("error", function(error){console.log("can't connect: "+error.message)})
 
 const corsOptions = {
   origin: '*'
