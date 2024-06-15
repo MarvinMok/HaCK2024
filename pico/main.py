@@ -108,17 +108,22 @@ def connectInternet(ssid, password):
     return ip
 
 def cb(topic, msg):
-    if msg == b"forward":
-        print("moving forwards")
-        move_forward()
-    elif msg == b"backward": 
-        move_backward()
-    elif msg == b"left":
-        move_left()
-    elif msg == b"right": #right
-        move_right()
-    elif msg == b"stop":
-        move_stop()
+    if topic == b"direction":
+        if msg == b"forward":
+            print("moving forwards")
+            move_forward()
+        elif msg == b"backward": 
+            move_backward()
+        elif msg == b"left":
+            move_left()
+        elif msg == b"right": #right
+            move_right()
+        elif msg == b"stop":
+            move_stop()
+    elif topic == b"arm":
+        print("Moving arm")
+        move(msg)
+
     print(topic, ", ", msg)
 
 # try:
@@ -155,6 +160,8 @@ try:
             client.publish(b"ultrasonic", str(sensor.distance_cm()).encode('utf-8'))
             last_time = cur_time
         client.subscribe("direction")
+        client.subscribe("arm")
+        client.publish('data', 'direction')
         sleep(0.001)
         #client.publish(b"test1", b"hello world")
 finally:
