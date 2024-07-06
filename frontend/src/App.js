@@ -10,8 +10,9 @@ const App = () => {
   const [ultrasonicData, setUltrasonicData] = useState([]);
   const [tempData, setTempData] = useState([]);
   const [humidData, setHumidData] = useState([]);
-  // const [ultrasonic, setUltrasonic] = useState("-1");
-  // const [temp, setTemp] = useState("-1");
+  const [latestUltrasonic, setLatestUltrasonic] = useState(null);
+  const [latestTemp, setLatestTemp] = useState(null);
+  const [latestHumid, setLatestHumid] = useState(null);
   const keydown = useRef(false);
   const [value, setValue] = useState(1500);
   // constand changing slider value
@@ -46,6 +47,7 @@ const App = () => {
       }
       return newData;
     });
+    setLatestUltrasonic(dataPoint);
   };
 
   const appendTempData = (dataPoint) => {
@@ -58,6 +60,7 @@ const App = () => {
       }
       return newData;
     });
+    setLatestTemp(dataPoint);
   };
 
   const appendHumidData = (dataPoint) => {
@@ -70,6 +73,7 @@ const App = () => {
       }
       return newData;
     });
+    setLatestHumid(dataPoint);
   };
 
   useEffect(() => {
@@ -95,6 +99,7 @@ const App = () => {
     return () => {
       socket.off('ultrasonic');
       socket.off('temp');
+      socket.off('humid');
     };
   }, []);
 
@@ -104,7 +109,7 @@ const App = () => {
     const handleKeyDown = (event) => {
       try {
         if (event.key === 'a' && keydown.current === false) {
-          sendLeft(); // Set interval to send message every 0.5 seconds
+          sendLeft();
           keydown.current = true;
         }
         else if (event.key === 'd' && keydown.current === false) {
@@ -268,13 +273,6 @@ const App = () => {
     stroke: {
       curve: 'smooth'
     },
-    title: {
-      text: 'Sensor Data',
-      align: 'left'
-    },
-    markers: {
-      size: 2
-    },
     xaxis: {
       type: 'datetime',
       tickAmount: 10,
@@ -301,7 +299,6 @@ const App = () => {
           onAfterChange={sendArmValue}
         />
       </div>
-      {/* <h3>{messageReceived}</h3> */}
       <h1>Control Rover</h1>
       <div>
         <p>W</p>
@@ -319,14 +316,17 @@ const App = () => {
       </div>
       <div>
         <h1>Ultrasonic Sensor Data</h1>
+        <p>Current Reading: {latestUltrasonic} cm</p>
         <Chart series={ultrasonicSeries} options={chartOptions} height={350} />
       </div>
       <div>
         <h1>Temperature Sensor Data</h1>
+        <p>Current Reading: {latestTemp} °C</p>
         <Chart series={tempSeries} options={chartOptions} height={350} />
       </div>
       <div>
         <h1>Humidity Sensor Data</h1>
+        <p>Current Reading: {latestHumid} %</p>
         <Chart series={humidSeries} options={chartOptions} height={350} />
       </div>
     </div>
