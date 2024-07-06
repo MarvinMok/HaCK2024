@@ -24,6 +24,8 @@ led = Pin('LED', Pin.OUT)
 FREQ = 1000
 SPEED = 65500 #0 to 2^16 -1
 
+# Motor controls for pico 
+
 def move_forward():
     Mot_A_Forward.duty_u16(SPEED)
     Mot_B_Forward.duty_u16(SPEED)
@@ -64,6 +66,7 @@ def motor_setup():
     Mot_B_Forward.freq(FREQ)
     Mot_B_Back.freq(FREQ)
 
+
 # ARM CONTROL
 
 PWM_MIN = 800
@@ -102,7 +105,7 @@ class sslWrap:
 def connectMQTT():
 
     client  = MQTTClient(
-        client_id=b"pico",
+        client_id=b"marvin",
         server=MQTT_SERVER,
         port=8883,
         user=MQTT_USER,
@@ -119,7 +122,7 @@ def connectInternet(ssid, password):
     wlan.active(True)
     wlan.connect(ssid, password)
     while wlan.isconnected() == False:
-       # print(wlan.status(), network.STAT_CONNECTING, network.STAT_CONNECT_FAIL, network.STAT_WRONG_PASSWORD, network.STAT_NO_AP_FOUND)
+        print(wlan.status(), network.STAT_CONNECTING, network.STAT_CONNECT_FAIL, network.STAT_WRONG_PASSWORD, network.STAT_NO_AP_FOUND)
         print('Waiting for connection...')
         sleep(1)
     ip = wlan.ifconfig()[0]
@@ -147,7 +150,7 @@ def cb(topic, msg):
             move_stop()
     elif topic == b"arm":
         print("Moving arm")
-        move_arm(int(msg))
+        # move(int(msg))
 
     print(topic, ", ", msg)
 
@@ -172,6 +175,7 @@ def cb(topic, msg):
 
 try:
     led.value(1)
+    
     ssid = WIFI_USER
     password = WIFI_PWD
     move_stop()
@@ -187,8 +191,8 @@ try:
         #     client.publish(b"ultrasonic", str(sensor.distance_cm()).encode('utf-8'))
         #     last_time = cur_time
         client.check_msg()
-        sleep(0.01)
-        client.publish(b"ultrasonic", b"hello world")
+        sleep(0.1)
+        #client.publish(b"test1", b"hello world")
 finally:
     # client.disconnect()
     move_stop()

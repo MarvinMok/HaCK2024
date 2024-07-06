@@ -22,7 +22,6 @@ class sslWrap:
         self.wrap_socket = ssl.wrap_socket
 
 def connectMQTT():
-
     client  = MQTTClient(
         client_id=b"marvin",
         server=MQTT_SERVER,
