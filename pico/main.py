@@ -24,6 +24,8 @@ led = Pin('LED', Pin.OUT)
 FREQ = 1000
 SPEED = 65500 #0 to 2^16 -1
 
+# Motor controls for pico 
+
 def move_forward():
     Mot_A_Forward.duty_u16(SPEED)
     Mot_B_Forward.duty_u16(SPEED)
@@ -64,10 +66,26 @@ def motor_setup():
     Mot_B_Forward.freq(FREQ)
     Mot_B_Back.freq(FREQ)
 
+
+# ARM CONTROL
+
+PWM_MIN = 800
+PWM_MAX = 2400
+
+MIN = PWM_MIN*10**3
+MAX = PWM_MAX*10**3
+MID = 1500000
+
+pwm = PWM(Pin(15))
+
+pwm.freq(50)
+
+
 # Arm control function
-def move(value):
-    print('move called with value:', value)
-    pwm.duty_ns(value)
+def move_arm(pwm_value):
+    print('move called with value:', pwm_value)
+    if pwm_value >= PWM_MIN and pwm_value <= PWM_MAX:
+        pwm.duty_ns(pwm_value*10**3)
 
 try:
     from constants import WIFI_USER, WIFI_PWD, MQTT_PASS, MQTT_SERVER, MQTT_USER
