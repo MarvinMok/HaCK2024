@@ -192,6 +192,14 @@ const App = () => {
         <p> A  D </p>
         <p>S</p>
       </div>
+      <div>
+        <iframe 
+        src="http://192.168.1.108/"
+        title="camera"
+        width="1000"
+        height="750"
+        style={{ border: '1px solid black' }}></iframe>
+      </div>
     </div>
   );
 

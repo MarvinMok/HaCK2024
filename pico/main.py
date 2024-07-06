@@ -3,6 +3,7 @@ import time
 from time import sleep
 import machine
 from machine import Pin, PWM
+import utime
 import ssl
 from simple import MQTTClient
 from hcsr04 import HCSR04
@@ -63,16 +64,19 @@ def motor_setup():
     Mot_B_Forward.freq(FREQ)
     Mot_B_Back.freq(FREQ)
 
-#Stop the robot as soon as possible    
+# Arm control function
+def move(value):
+    print('move called with value:', value)
+    pwm.duty_ns(value)
 
 try:
-    from constants import *
+    from constants import WIFI_USER, WIFI_PWD, MQTT_PASS, MQTT_SERVER, MQTT_USER
 except:
-    WIFI_USER = ""
-    WIFI_PWD = ""
-    MQTT_SERVER = ""
-    MQTT_USER = ""
-    MQTT_PWD = ""
+    WIFI_USER="IEEE"
+    WIFI_PWD="Ilovesolder"
+    MQTT_SERVER="378861656db74bd1becac997eb01cb13.s1.eu.hivemq.cloud"
+    MQTT_USER="picow"
+    MQTT_PWD="Raspberry1"
     print("no constants")
 
 
@@ -108,21 +112,27 @@ def connectInternet(ssid, password):
     return ip
 
 def cb(topic, msg):
+    print("Callback triggered")
+    print(f"Topic: {topic}, Message: {msg}")
     if topic == b"direction":
         if msg == b"forward":
-            print("moving forwards")
+            print("Moving forwards")
             move_forward()
-        elif msg == b"backward": 
+        elif msg == b"backward":
+            print("Moving backwards")
             move_backward()
         elif msg == b"left":
+            print("Moving left")
             move_left()
-        elif msg == b"right": #right
+        elif msg == b"right":
+            print("Moving right")
             move_right()
         elif msg == b"stop":
+            print("Stopping")
             move_stop()
     elif topic == b"arm":
         print("Moving arm")
-        move(msg)
+        # move(int(msg))
 
     print(topic, ", ", msg)
 
@@ -147,25 +157,26 @@ def cb(topic, msg):
 
 try:
     led.value(1)
+    
     ssid = WIFI_USER
     password = WIFI_PWD
     move_stop()
     connectInternet(ssid, password)
     client = connectMQTT()
     client.set_callback(cb)
+    client.subscribe(b"direction")
+    client.subscribe(b"arm")
     last_time = time.ticks_ms()
     while True: 
-        cur_time = time.ticks_ms()
-        if (time.ticks_diff(cur_time, last_time) > 1000):
-            client.publish(b"ultrasonic", str(sensor.distance_cm()).encode('utf-8'))
-            last_time = cur_time
-        client.subscribe("direction")
-        client.subscribe("arm")
-        client.publish('data', 'direction')
-        sleep(0.001)
+        # cur_time = time.ticks_ms()
+        # if (time.ticks_diff(cur_time, last_time) > 1000):
+        #     client.publish(b"ultrasonic", str(sensor.distance_cm()).encode('utf-8'))
+        #     last_time = cur_time
+        client.check_msg()
+        sleep(0.1)
         #client.publish(b"test1", b"hello world")
 finally:
-    client.disconnect()
+    # client.disconnect()
     move_stop()
     led.value(0)
     machine.reset()
