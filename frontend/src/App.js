@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
+import io from 'socket.io-client';
+import Chart from "react-apexcharts";
 import SliderComponent from "./SliderComponent";
 import "./App.css";
 
-const App = () => {
+const socket = io('http://localhost:8000');
 
-  const [ultrasonic, setUltrasonic] = useState("-1");
-  const [temp, setTemp] = useState("-1");
+const App = () => {
+  const [ultrasonicData, setUltrasonicData] = useState([]);
+  const [temp, setTemp] = useState([]);
+  // const [ultrasonic, setUltrasonic] = useState("-1");
+  // const [temp, setTemp] = useState("-1");
   const keydown = useRef(false);
   const [value, setValue] = useState(1500);
   // constand changing slider value
@@ -30,29 +35,38 @@ const App = () => {
     }
   };
 
+  const appendData = (dataPoint) => {
+    const pacificTime = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
+    const dateInPT = new Date(pacificTime);
+    setUltrasonicData(prevData => {
+      const newData = [...prevData, { x: dateInPT.getTime(), y: parseFloat(dataPoint) }];
+      if (newData.length > 20) {
+        newData.shift(); // Keep only the last 20 data points
+      }
+      return newData;
+    });
+  };
+
   // For Receving Message
   // Will be used for sensor data
-  // useEffect(() => {
-  //   fetch("http://localhost:8000/temp")
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       if( temp !== data.temp ) {
-  //         setTemp(data.temp);
-  //       }
-  //     });
-  // }, []);
-  // useEffect(() => {
-  //   fetch("http://localhost:8000/ultrasonic")
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       if( ultrasonic !== data.ultrasonic ) {
-  //         setUltrasonic(data.ultrasonic);
-  //       }
-  //     });
-  // }, []);
+  useEffect(() => {
+    // fetch("http://localhost:8000/message")
+    // .then((res) => res.json())
+    // .then((data) => setMessageReceived(data.message));
+    
+    socket.on('ultrasonic', (data) => {
+      console.log('Received ultrasonic data:', data);
+      appendData(data);
+    });
 
+    socket.on('connect_error', (err) => {
+      console.error('Socket.IO connection error:', err);
+    });
 
-  // Controls for Rover
+    return () => {
+      socket.off('ultrasonic');
+    };
+  }, []);
 
   useEffect(() => {
     // when any key is pressed handleKeyDown is pressed 
@@ -184,9 +198,56 @@ const App = () => {
     }
   };
 
+  const series = [
+    {
+      name: 'Ultrasonic Sensor',
+      data: ultrasonicData
+    }
+  ];
 
-
-  // CODE THAT IS BEING RENDERED 
+  const options = {
+    chart: {
+      id: 'realtime',
+      type: 'line',
+      animations: {
+        enabled: true,
+        easing: 'linear',
+        dynamicAnimation: {
+          speed: 1000
+        }
+      },
+      toolbar: {
+        show: true
+      }
+    },
+    dataLabels: {
+      enabled: true
+    },
+    stroke: {
+      curve: 'smooth'
+    },
+    title: {
+      text: 'Ultrasonic Sensor Data',
+      align: 'left'
+    },
+    markers: {
+      size: 2
+    },
+    xaxis: {
+      type: 'datetime',
+      tickAmount: 10,
+      tickPlacement: 'on',
+      labels: {
+        formatter: function(value) {
+          return new Date(value).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles" });
+        }
+      }
+    },
+    yaxis: {
+      min: 0,
+      max: 100
+    }
+  };
 
   return (
     <div className="App">
@@ -211,16 +272,20 @@ const App = () => {
         title="camera"
         width="1000"
         height="750"
-        style={{ border: '1px solid black' }}></iframe>
+          style={{ border: '1px solid black' }}
+        ></iframe>
       </div>
-      <div className="sensor-reading">
+      <div>
+        <h1>Ultrasonic Sensor Data</h1>
+        <Chart series={series} options={options} height={350} />
+      </div>
+      {/* <div className="sensor-reading">
           <h4>Temp: {temp}</h4>
           <h4>Distance: {ultrasonic}</h4>
-      </div>
+      </div> */}
     </div>
   );
-
-}
+};
 
 export default App;
 
