@@ -18,7 +18,7 @@ Mot_A_Back = PWM(Pin(19, Pin.OUT))
 Mot_B_Forward = PWM(Pin(20, Pin.OUT))
 Mot_B_Back = PWM(Pin(21, Pin.OUT))
 
-sensor = HCSR04(trigger_pin=16, echo_pin=15, echo_timeout_us=10000)
+sensor = HCSR04(trigger_pin=16, echo_pin=17, echo_timeout_us=10000)
 
 led = Pin('LED', Pin.OUT)
 FREQ = 1000
@@ -89,9 +89,9 @@ try:
 except:
     WIFI_USER="IEEE"
     WIFI_PWD="Ilovesolder"
-    MQTT_SERVER="378861656db74bd1becac997eb01cb13.s1.eu.hivemq.cloud"
-    MQTT_USER="picow"
-    MQTT_PWD="Raspberry1"
+    MQTT_SERVER="b336487b99734211867870bc957c5a4f.s1.eu.hivemq.cloud"
+    MQTT_USER="abcde"
+    MQTT_PWD="12345Qaz"
     print("no constants")
 
 
@@ -182,18 +182,19 @@ try:
     client.subscribe(b"arm")
     last_time = time.ticks_ms()
     while True: 
-        # cur_time = time.ticks_ms()
-        # if (time.ticks_diff(cur_time, last_time) > 1000):
-        #     client.publish(b"ultrasonic", str(sensor.distance_cm()).encode('utf-8'))
-        #     last_time = cur_time
+        cur_time = time.ticks_ms()
+        if time.ticks_diff(cur_time, last_time) > 1000:
+            distance = sensor.distance_cm()
+            print(f"Ultrasonic Distance: {distance} cm")  # Debug print for sensor data
+            client.publish(b"ultrasonic", str(distance).encode('utf-8'))
+            last_time = cur_time
         client.check_msg()
         sleep(0.01)
-        client.publish(b"ultrasonic", b"hello world")
+        # client.publish(b"ultrasonic", b"hello world")
 finally:
     # client.disconnect()
     move_stop()
     led.value(0)
-    machine.reset()
+    # machine.reset()
 
-    
     

@@ -15,9 +15,9 @@ const io = new Server(server, {
   }
 });
 
-const CONNECT_URL = "mqtts://378861656db74bd1becac997eb01cb13.s1.eu.hivemq.cloud:8883";
-const MQTT_USR = "Nodeserver";
-const MQTT_PASS = "Nodeserver1";
+const CONNECT_URL = "mqtts://b336487b99734211867870bc957c5a4f.s1.eu.hivemq.cloud:8883";
+const MQTT_USR = "abcde";
+const MQTT_PASS = "12345Qaz";
 const CLIENTID = "frontend";
 
 const client = MQTT.connect(CONNECT_URL, {
@@ -49,10 +49,6 @@ client.on("reconnect", function () {
   console.log("Attempting to reconnect...");
 });
 
-// 
-
-
-
 client.on('connect', async () => {
   console.log("Connected");
 
@@ -83,23 +79,10 @@ client.on('connect', async () => {
 
 client.on('message', (TOPIC, payload) => {
   console.log("Received from broker:", TOPIC, payload.toString());
-  latest = payload.toString();
+  io.emit('ultrasonic', payload.toString());
 });
 
-
-// Used for debugging 
-
-// client.on('packetsend', (packet) => {
-//   console.log('Packet sent: ', packet);
-// });
-
-// client.on('packetreceive', (packet) => {
-//   console.log('Packet received: ', packet);
-// });
-
-// 
-
-
+// Express Middleware
 const corsOptions = {
   origin: '*'
 };
@@ -107,9 +90,9 @@ const corsOptions = {
 APP.use(cors(corsOptions));
 APP.use(express.json());
 
-APP.listen(8000, () => {
-  console.log('Server is running on port 8000');
-});
+// APP.listen(8000, () => {
+//   console.log('Server is running on port 8000');
+// });
 
 APP.get('/message', (req, res) => {
   res.json({ message: "Message from backend" });
@@ -129,9 +112,15 @@ APP.post('/send-arm-value', (req, res) => {
   res.status(200).json({ status: 'Message received' });
 });
 
+// WebSocket Event Handlers
 io.on("connection", (socket) => {
   console.log("A user connected");
   socket.on("disconnect", () => {
     console.log("User disconnected");
   });
+});
+
+// Start the server
+server.listen(8000, () => {
+  console.log('Server is running on port 8000');
 });
