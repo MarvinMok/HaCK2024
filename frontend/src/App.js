@@ -4,7 +4,8 @@ import "./App.css";
 
 const App = () => {
 
-  const [messageReceived, setMessageReceived] = useState("");
+  const [ultrasonic, setUltrasonic] = useState("-1");
+  const [temp, setTemp] = useState("-1");
   const keydown = useRef(false);
   const [value, setValue] = useState(1500);
   // constand changing slider value
@@ -31,12 +32,24 @@ const App = () => {
 
   // For Receving Message
   // Will be used for sensor data
-  useEffect(() => {
-    fetch("http://localhost:8000/message")
-      .then((res) => res.json())
-      .then((data) => setMessageReceived(data.message));
-  }, []);
-
+  // useEffect(() => {
+  //   fetch("http://localhost:8000/temp")
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       if( temp !== data.temp ) {
+  //         setTemp(data.temp);
+  //       }
+  //     });
+  // }, []);
+  // useEffect(() => {
+  //   fetch("http://localhost:8000/ultrasonic")
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       if( ultrasonic !== data.ultrasonic ) {
+  //         setUltrasonic(data.ultrasonic);
+  //       }
+  //     });
+  // }, []);
 
 
   // Controls for Rover
@@ -199,6 +212,10 @@ const App = () => {
         width="1000"
         height="750"
         style={{ border: '1px solid black' }}></iframe>
+      </div>
+      <div className="sensor-reading">
+          <h4>Temp: {temp}</h4>
+          <h4>Distance: {ultrasonic}</h4>
       </div>
     </div>
   );
