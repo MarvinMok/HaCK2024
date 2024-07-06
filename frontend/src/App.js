@@ -8,7 +8,8 @@ const socket = io('http://localhost:8000');
 
 const App = () => {
   const [ultrasonicData, setUltrasonicData] = useState([]);
-  const [temp, setTemp] = useState([]);
+  const [tempData, setTempData] = useState([]);
+  const [humidData, setHumidData] = useState([]);
   // const [ultrasonic, setUltrasonic] = useState("-1");
   // const [temp, setTemp] = useState("-1");
   const keydown = useRef(false);
@@ -35,28 +36,56 @@ const App = () => {
     }
   };
 
-  const appendData = (dataPoint) => {
+  const appendUltrasonicData = (dataPoint) => {
     const pacificTime = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
     const dateInPT = new Date(pacificTime);
     setUltrasonicData(prevData => {
       const newData = [...prevData, { x: dateInPT.getTime(), y: parseFloat(dataPoint) }];
       if (newData.length > 20) {
-        newData.shift(); // Keep only the last 20 data points
+        newData.shift();
       }
       return newData;
     });
   };
 
-  // For Receving Message
-  // Will be used for sensor data
+  const appendTempData = (dataPoint) => {
+    const pacificTime = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
+    const dateInPT = new Date(pacificTime);
+    setTempData(prevData => {
+      const newData = [...prevData, { x: dateInPT.getTime(), y: parseFloat(dataPoint) }];
+      if (newData.length > 20) {
+        newData.shift();
+      }
+      return newData;
+    });
+  };
+
+  const appendHumidData = (dataPoint) => {
+    const pacificTime = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
+    const dateInPT = new Date(pacificTime);
+    setHumidData(prevData => {
+      const newData = [...prevData, { x: dateInPT.getTime(), y: parseFloat(dataPoint) }];
+      if (newData.length > 20) {
+        newData.shift();
+      }
+      return newData;
+    });
+  };
+
   useEffect(() => {
-    // fetch("http://localhost:8000/message")
-    // .then((res) => res.json())
-    // .then((data) => setMessageReceived(data.message));
-    
     socket.on('ultrasonic', (data) => {
       console.log('Received ultrasonic data:', data);
-      appendData(data);
+      appendUltrasonicData(data);
+    });
+
+    socket.on('temp', (data) => {
+      console.log('Received temperature data:', data);
+      appendTempData(data);
+    });
+
+    socket.on('humid', (data) => {
+      console.log('Received humidity data:', data);
+      appendHumidData(data);
     });
 
     socket.on('connect_error', (err) => {
@@ -65,6 +94,7 @@ const App = () => {
 
     return () => {
       socket.off('ultrasonic');
+      socket.off('temp');
     };
   }, []);
 
@@ -89,12 +119,11 @@ const App = () => {
           sendBackward(); 
           keydown.current = true;
         }
+      } catch (error) {
+        console.log(`Error handling keydown: ${event.key}`);
       }
-      catch (error) {
-        console.log(`Error handling keydown: {event.key}`)
-      }
-    }
-  
+    };
+
     const handleKeyUp = (event) => {
       if (event.key === 'w' || event.key === 'a' || event.key === 's' || event.key === 'd' 
       // || event.key === 'ArrowUp' || event.key === 'ArrowDown'
@@ -149,7 +178,6 @@ const App = () => {
     }
   };
 
-
   const sendRight = async () => {
     try {
       const response = await fetch('http://localhost:8000/send-direction', {
@@ -198,14 +226,28 @@ const App = () => {
     }
   };
 
-  const series = [
+  const ultrasonicSeries = [
     {
       name: 'Ultrasonic Sensor',
       data: ultrasonicData
     }
   ];
 
-  const options = {
+  const tempSeries = [
+    {
+      name: 'Temperature Sensor',
+      data: tempData
+    }
+  ];
+
+  const humidSeries = [
+    {
+      name: 'Humidity Sensor',
+      data: humidData
+    }
+  ];
+
+  const chartOptions = {
     chart: {
       id: 'realtime',
       type: 'line',
@@ -227,7 +269,7 @@ const App = () => {
       curve: 'smooth'
     },
     title: {
-      text: 'Ultrasonic Sensor Data',
+      text: 'Sensor Data',
       align: 'left'
     },
     markers: {
@@ -251,7 +293,7 @@ const App = () => {
 
   return (
     <div className="App">
-      <div className>
+      <div>
         <h1>Arm Slider</h1>
         <SliderComponent
           value={value}
@@ -277,15 +319,18 @@ const App = () => {
       </div>
       <div>
         <h1>Ultrasonic Sensor Data</h1>
-        <Chart series={series} options={options} height={350} />
+        <Chart series={ultrasonicSeries} options={chartOptions} height={350} />
       </div>
-      {/* <div className="sensor-reading">
-          <h4>Temp: {temp}</h4>
-          <h4>Distance: {ultrasonic}</h4>
-      </div> */}
+      <div>
+        <h1>Temperature Sensor Data</h1>
+        <Chart series={tempSeries} options={chartOptions} height={350} />
+      </div>
+      <div>
+        <h1>Humidity Sensor Data</h1>
+        <Chart series={humidSeries} options={chartOptions} height={350} />
+      </div>
     </div>
   );
 };
 
 export default App;
-

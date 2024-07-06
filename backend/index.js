@@ -20,19 +20,18 @@ const MQTT_USR = "abcde";
 const MQTT_PASS = "12345Qaz";
 const CLIENTID = "frontend";
 
-const client = MQTT.connect(process.env.CONNECT_URL, {
+const client = MQTT.connect(CONNECT_URL, {
   clientId: CLIENTID,
   clean: true,
   connectTimeout: 3000,
-  username: process.env.MQTT_USER,
-  password: process.env.MQTT_PASS,
+  username: MQTT_USR,
+  password: MQTT_PASS,
   reconnectPeriod: 10000,
   debug: true,
   rejectUnauthorized: false // Add this line for testing, should be removed in production
 });
 
-// Used for debugging 
-
+// MQTT Event Handlers
 client.on("error", function (error) {
   console.error("Connection error: ", error);
 });
@@ -69,19 +68,29 @@ client.on('connect', async () => {
       console.log("Subscribed to 'temp'");
     }
   });
+
+  client.subscribe("humid", (err) => {
+    if (err) {
+      console.error("Subscription error for 'humid': ", err);
+    } else {
+      console.log("Subscribed to 'humid'");
+    }
+  });
 });
 
 client.on('message', (TOPIC, payload) => {
   console.log("Received from broker:", TOPIC, payload.toString());
-  if( TOPIC === 'temp' ) {
-    // latestTemp = payload.toString();
-    io.emit('temp', payload.toString());
-  }
-  else if ( TOPIC === 'ultrasonic' ) {
+  
+  if ( TOPIC === 'ultrasonic' ) {
     // latestUltrasonic = payload.toString();
     io.emit('ultrasonic', payload.toString());
   }
-  
+  else if( TOPIC === 'temp' ) {
+    io.emit('temp', payload.toString());
+  }
+  else if ( TOPIC === 'humid' ) {
+    io.emit('humid', payload.toString());
+  }
 });
 
 // Express Middleware
@@ -92,23 +101,9 @@ const corsOptions = {
 APP.use(cors(corsOptions));
 APP.use(express.json());
 
-// APP.listen(8000, () => {
-//   console.log('Server is running on port 8000');
-// });
-
-// Readings from sensors 
-let latestTemp = null;
-let latestUltrasonic = null;
-
-// APP.get('/temp', (req, res) => {
-//   res.json({ temp: {latestTemp} });
-// });
-// APP.get('/ultrasonic', (req, res) => {
-//   res.json({ ultrasonic: {latestUltrasonic} });
-// });
-
-
-// Sending to PICO 
+APP.get('/message', (req, res) => {
+  res.json({ message: "Message from backend" });
+});
 
 APP.post('/send-direction', (req, res) => {
   const { message } = req.body;

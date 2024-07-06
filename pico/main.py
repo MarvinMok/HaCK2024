@@ -7,16 +7,10 @@ import utime
 import ssl
 from simple import MQTTClient
 from hcsr04 import HCSR04
-
+from dht import DHT11
 
 
 # Yes, these could be in another file. But on the Pico! So no more secure. :)
-from dht import DHT11
-
-dataPin = 16
-
-mypin= Pin(dataPin, Pin.OUT, Pin.PULL_DOWN)
-sensor =DHT11(mypin)
 
 # Define pins to pin motors!
 Mot_A_Forward = PWM(Pin(18, Pin.OUT))
@@ -24,7 +18,12 @@ Mot_A_Back = PWM(Pin(19, Pin.OUT))
 Mot_B_Forward = PWM(Pin(20, Pin.OUT))
 Mot_B_Back = PWM(Pin(21, Pin.OUT))
 
-ultraSensor = HCSR04(trigger_pin=16, echo_pin=15, echo_timeout_us=10000)
+dataPin = 14
+
+mypin= Pin(dataPin, Pin.OUT, Pin.PULL_DOWN)
+tempSensor = DHT11(mypin)
+
+ultraSensor = HCSR04(trigger_pin=16, echo_pin=17, echo_timeout_us=10000)
 
 led = Pin('LED', Pin.OUT)
 FREQ = 1000
@@ -72,7 +71,7 @@ def motor_setup():
 
 # ARM CONTROL
 
-PWM_MIN = 600
+PWM_MIN = 800
 PWM_MAX = 2400
 
 MIN = PWM_MIN*10**3
@@ -86,19 +85,18 @@ pwm.freq(50)
 
 # Arm control function
 def move_arm(pwm_value):
-    #print('move called with value:', pwm_value)
+    print('move called with value:', pwm_value)
     if pwm_value >= PWM_MIN and pwm_value <= PWM_MAX:
         pwm.duty_ns(pwm_value*10**3)
 
 try:
     from constants import WIFI_USER, WIFI_PWD, MQTT_PASS, MQTT_SERVER, MQTT_USER
-    print(WIFI_USER, WIFI_PWD, MQTT_PASS, MQTT_SERVER, MQTT_USER)
 except:
     WIFI_USER="IEEE"
     WIFI_PWD="Ilovesolder"
-    MQTT_SERVER="378861656db74bd1becac997eb01cb13.s1.eu.hivemq.cloud"
-    MQTT_USER="picow"
-    MQTT_PWD="Raspberry1"
+    MQTT_SERVER="b336487b99734211867870bc957c5a4f.s1.eu.hivemq.cloud"
+    MQTT_USER="abcde"
+    MQTT_PWD="12345Qaz"
     print("no constants")
 
 
@@ -134,7 +132,7 @@ def connectInternet(ssid, password):
     return ip
 
 def cb(topic, msg):
-    # print("Callback triggered")
+    print("Callback triggered")
     print(f"Topic: {topic}, Message: {msg}")
     if topic == b"direction":
         if msg == b"forward":
@@ -153,10 +151,10 @@ def cb(topic, msg):
             print("Stopping")
             move_stop()
     elif topic == b"arm":
-        # print("Moving arm")
+        print("Moving arm")
         move_arm(int(msg))
 
-    # print(topic, ", ", msg)
+    print(topic, ", ", msg)
 
 # try:
 #     motor_setup()
@@ -189,10 +187,19 @@ try:
     client.subscribe(b"arm")
     last_time = time.ticks_ms()
     while True: 
-        # cur_time = time.ticks_ms()
-        # if (time.ticks_diff(cur_time, last_time) > 1000):
-        #     client.publish(b"ultrasonic", str(ultraSensor.distance_cm()).encode('utf-8'))
-        #     last_time = cur_time
+        cur_time = time.ticks_ms()
+        if time.ticks_diff(cur_time, last_time) > 1000:
+            tempSensor.measure()
+            tempC = tempSensor.temperature()
+            Humidity = tempSensor.humidity()
+            print(f"Temperature: {tempC}, Humidity: {Humidity}")
+            client.publish(b"temp", str(tempC).encode('utf-8'))
+            client.publish(b"humid", str(Humidity).encode('utf-8'))
+
+            distance = ultraSensor.distance_cm()
+            print(f"Ultrasonic Distance: {distance} cm")  # Debug print for sensor data
+            client.publish(b"ultrasonic", str(distance).encode('utf-8'))
+            last_time = cur_time
         client.check_msg()
         sleep(0.01)
         # client.publish(b"ultrasonic", b"hello world")
@@ -200,6 +207,4 @@ finally:
     # client.disconnect()
     move_stop()
     led.value(0)
-
-    
-    
+    # machine.reset()
