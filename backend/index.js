@@ -28,7 +28,8 @@ const client = MQTT.connect(process.env.CONNECT_URL, {
   rejectUnauthorized: false // Add this line for testing, should be removed in production
 });
 
-// MQTT Event Handlers
+// Used for debugging 
+
 client.on("error", function (error) {
   console.error("Connection error: ", error);
 });
@@ -98,33 +99,29 @@ const corsOptions = {
 APP.use(cors(corsOptions));
 APP.use(express.json());
 
-APP.get('/message', (req, res) => {
-  res.json({ message: "Message from backend" });
-});
 
-APP.post('/send-direction', (req, res) => {
-  const { message } = req.body;
-  console.log('Received message from frontend:', message);
-  client.publish("direction", message);
-  res.status(200).json({ status: 'Message received' });
-});
 
-APP.post('/send-arm-value', (req, res) => {
-  const { message } = req.body;
-  console.log('Received message from frontend:', message);
-  client.publish("arm", message.toString());
-  res.status(200).json({ status: 'Message received' });
-});
-
-// WebSocket Event Handlers
 io.on("connection", (socket) => {
-  console.log("A user connected");
+  console.log("Frontend connected to socket");
+
+  // Listen for direction messages from the frontend
+  socket.on('send-direction', (message) => {
+    console.log('Received direction message from frontend:', message);
+    client.publish("direction", message);
+  });
+
+  // Listen for arm value messages from the frontend
+  socket.on('send-arm-value', (message) => {
+    console.log('Received arm value message from frontend:', message);
+    client.publish("arm", message.toString());
+  });
+
   socket.on("disconnect", () => {
-    console.log("User disconnected");
+    console.log("Frontend disconnected from socket");
   });
 });
 
-// Start the server
+
 server.listen(8000, () => {
   console.log('Server is running on port 8000');
 });
