@@ -15,17 +15,14 @@ const io = new Server(server, {
   }
 });
 
-const CONNECT_URL = "mqtts://b336487b99734211867870bc957c5a4f.s1.eu.hivemq.cloud:8883";
-const MQTT_USR = "abcde";
-const MQTT_PASS = "12345Qaz";
 const CLIENTID = "frontend";
 
 const client = MQTT.connect(CONNECT_URL, {
   clientId: CLIENTID,
   clean: true,
   connectTimeout: 3000,
-  username: MQTT_USR,
-  password: MQTT_PASS,
+  username: process.env.MQTT_USER,
+  password: process.env.MQTT_PASS,
   reconnectPeriod: 10000,
   debug: true,
   rejectUnauthorized: false // Add this line for testing, should be removed in production
