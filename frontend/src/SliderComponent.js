@@ -7,7 +7,7 @@ const SliderComponent = ({ value, onChange, onAfterChange }) => {
       <div className="slider-container">
         <Slider
           min={600}
-          max={2400}
+          max={1800}
           value={value}
           onChange={onChange}
           onAfterChange={onAfterChange}

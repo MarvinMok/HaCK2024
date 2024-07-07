@@ -5,7 +5,7 @@ import time
 
 s1 = Servo(pin=16)  #To be changed according to the pin used
 s2 = Servo(pin=17)
-adc = ADC(Pin(26))
+adc = ADC(Pin(15))
 d1 = d2 = 0
 s1.move(0)
 s2.move(0)
@@ -21,4 +21,3 @@ try:
         time.sleep(0.5)
 finally:
     pass
-    machine.reset()

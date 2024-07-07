@@ -68,6 +68,54 @@ client.on('connect', async () => {
   });
 });
 
+
+const corsOptions = {
+  origin: '*'
+};
+
+APP.use(cors(corsOptions));
+APP.use(express.json());
+
+// Readings from sensors 
+let latestTemp = null;
+let latestUltrasonic = null;
+
+io.on("connection", (socket) => {
+  console.log("Frontend connected to socket");
+
+  // Send the latest sensor data to the newly connected client
+  if (latestTemp) {
+    socket.emit('temp', latestTemp);
+  }
+  if (latestUltrasonic) socket.emit('ultrasonic', latestUltrasonic);
+
+  // Listen for direction messages from the frontend
+  socket.on('send-direction', (message) => {
+    console.log('Received direction message from frontend:', message);
+    client.publish("direction", message);
+  });
+
+  // Listen for arm value messages from the frontend
+  socket.on('send-arm-value', (message) => {
+    console.log('Received arm value message from frontend:', message);
+    client.publish("arm", message.toString());
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Frontend disconnected from socket");
+  });
+
+});
+
+setInterval(() => {
+  io.emit('temp', latestTemp);
+  io.emit('ultrasonic', latestUltrasonic);
+}, 1000);
+
+server.listen(8000, () => {
+  console.log('Server is running on port 8000');
+});
+
 client.on('message', (TOPIC, payload) => {
   console.log("Received from broker:", TOPIC, payload.toString());
   if( TOPIC === 'temp' ) {
@@ -81,51 +129,8 @@ client.on('message', (TOPIC, payload) => {
 
 
 
-const corsOptions = {
-  origin: '*'
-};
-
-APP.use(cors(corsOptions));
-APP.use(express.json());
-
-APP.listen(8000, () => {
-  console.log('Server is running on port 8000');
-});
-
-// Readings from sensors 
-let latestTemp = null;
-let latestUltrasonic = null;
-
-// APP.get('/temp', (req, res) => {
-//   res.json({ temp: {latestTemp} });
-// });
-// APP.get('/ultrasonic', (req, res) => {
-//   res.json({ ultrasonic: {latestUltrasonic} });
-// });
-
-
-// Sending to PICO 
-
-APP.post('/send-direction', (req, res) => {
-  const { message } = req.body;
-  console.log('Received message from frontend:', message);
-  client.publish("direction", message);
-  res.status(200).json({ status: 'Message received' });
-});
-
-APP.post('/send-arm-value', (req, res) => {
-  const { message } = req.body;
-  console.log('Received message from frontend:', message);
-  client.publish("arm", message.toString());
-  res.status(200).json({ status: 'Message received' });
-});
 
 
 
 
-io.on("connection", (socket) => {
-  console.log("A user connected");
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
-  });
-});
+
