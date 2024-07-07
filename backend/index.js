@@ -17,7 +17,7 @@ const io = new Server(server, {
 
 const CLIENTID = "frontend";
 
-const client = MQTT.connect(CONNECT_URL, {
+const client = MQTT.connect(process.env.CONNECT_URL, {
   clientId: CLIENTID,
   clean: true,
   connectTimeout: 3000,
