@@ -10,11 +10,15 @@ const App = () => {
   // const [ultrasonic, setUltrasonic] = useState("-1");
   // const [temp, setTemp] = useState("-1");
   const keydown = useRef(false);
-  const [value, setValue] = useState(1800);
+  const [value, setValue] = useState(1700);
+  const [pinchValue, setPinchValue] = useState(600)
   // constand changing slider value
-  const handleChange = (newValue) => {
+  const handleArmChange = (newValue) => {
     setValue(newValue);
   };
+  const handlePinchChange = (newValue) => {
+    setPinchValue(newValue);
+  }
 
   // useEffect( () )
 
@@ -63,6 +67,10 @@ const App = () => {
     socket.emit('send-arm-value', value);
   };
 
+  const sendPinchValue = (value) => {
+    socket.emit('send-pinch-value', value);
+  }
+ 
   // For Receving Message
   // Will be used for sensor data
   // useEffect(() => {
@@ -231,12 +239,24 @@ const App = () => {
 
   return (
     <div className="App">
-      <div className>
+      <div >
         <h1>Arm Slider</h1>
         <SliderComponent
+          min={950}
+          max={1700}
           value={value}
-          onChange={handleChange}
+          onChange={handleArmChange}
           onAfterChange={sendArmValue}
+        />
+      </div>
+      <div >
+        <h1>Pinch Slider</h1>
+        <SliderComponent
+          min={600}
+          max={1800}
+          value={pinchValue}
+          onChange={handlePinchChange}
+          onAfterChange={sendPinchValue}
         />
       </div>
       {/* <h3>{messageReceived}</h3> */}
@@ -248,7 +268,7 @@ const App = () => {
       </div>
       <div>
         <iframe 
-        src="http://192.168.1.108/"
+        src="http://192.168.1.40"
         title="camera"
         width="1000"
         height="750"

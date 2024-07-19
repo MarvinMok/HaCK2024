@@ -2,12 +2,12 @@
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 
-const SliderComponent = ({ value, onChange, onAfterChange }) => {
+const SliderComponent = ({ min, max, value, onChange, onAfterChange }) => {
     return (
       <div className="slider-container">
         <Slider
-          min={600}
-          max={1800}
+          min={min}
+          max={max}
           value={value}
           onChange={onChange}
           onAfterChange={onAfterChange}

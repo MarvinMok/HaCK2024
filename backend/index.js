@@ -101,6 +101,11 @@ io.on("connection", (socket) => {
     client.publish("arm", message.toString());
   });
 
+  socket.on('send-pinch-value', (message) => {
+    console.log('Received arm value message from frontend:', message);
+    client.publish("pinch", message.toString());
+  });
+
   socket.on("disconnect", () => {
     console.log("Frontend disconnected from socket");
   });
