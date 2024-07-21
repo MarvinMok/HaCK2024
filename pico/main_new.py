@@ -112,11 +112,12 @@ def move_right():
 PWM_MIN = 600
 PWM_MAX = 2400
 
-MIN = PWM_MIN*10**3
-MAX = PWM_MAX*10**3
+MIN = PWM_MIN#*10**3
+MAX = PWM_MAX#*10**3
 MID = 1500000
 
 pwm = PWM(Pin(15))
+pwm_pinch = PWM(Pin(14))
 
 pwm.freq(50)
 
@@ -126,13 +127,19 @@ def move_arm(pwm_value):
     #print('move called with value:', pwm_value)
     if pwm_value >= PWM_MIN and pwm_value <= PWM_MAX:
         pwm.duty_ns(pwm_value*10**3)
+        
+def move_pinch(pwm_value):
+    if pwm_value >= PWM_MIN and pwm_value <= PWM_MAX:
+        pwm_pinch.duty_ns(pwm_value*10**3)
 
 try:
     from constants import WIFI_USER, WIFI_PWD, MQTT_PASS, MQTT_SERVER, MQTT_USER
     print(WIFI_USER, WIFI_PWD, MQTT_PASS, MQTT_SERVER, MQTT_USER)
 except:
-    WIFI_USER="IEEE"
-    WIFI_PWD="Ilovesolder"
+#     WIFI_USER="IEEE"
+#     WIFI_PWD="Ilovesolder"
+    WIFI_USER="ATTWyFVWyV"
+    WIFI_PWD="hcga2x7gkmrc"
     MQTT_SERVER="378861656db74bd1becac997eb01cb13.s1.eu.hivemq.cloud"
     MQTT_USER="picow"
     MQTT_PWD="Raspberry1"
@@ -192,6 +199,8 @@ def cb(topic, msg):
     elif topic == b"arm":
         # print("Moving arm")
         move_arm(int(msg))
+    elif topic == b"pinch":
+        move_pinch(int(msg))
 
     # print(topic, ", ", msg)
 
@@ -217,6 +226,8 @@ if __name__ == "__main__":
     try:
         # reset motors    
         move_stop()
+        move_pinch(600)
+        move_arm(1700)
         
         # Wifi connection
         ssid = WIFI_USER
@@ -228,6 +239,7 @@ if __name__ == "__main__":
         client.set_callback(cb)
         client.subscribe(b"direction")
         client.subscribe(b"arm")
+        client.subscribe(b"pinch")
         led.value(1)
         
         # cycle counter for sensor
@@ -243,32 +255,24 @@ if __name__ == "__main__":
 #                 sensor.measure()
 #                 tempC = str(sensor.temperature())
 #                 humidity = str(sensor.humidity())
-# #                 print(f"temp: {tempC}, Humidity: {Humidity}")
-#                 client.publish(b"temp", humidity)
+#                 print(f"temp: {tempC}, Humidity: {Humidity}")
+#                 client.publish(b"temp", tempC)
+#                 client.publish(b"ultrasonic", b"hello world")
 #                 cycle = 0
 #             else:
 #                 cycle += 1
+#             
             
-            # client.publish(b"ultrasonic", b"hello world")
     except KeyboardInterrupt:
             print("exit")
     finally:
         # client.disconnect()
+        move_arm(1700)
+        move_pinch(600)
         move_stop()
         led.value(0)
 
     
     
 
-    #     ip = connect()
-    #     connection = open_socket(ip)
-    #     serve(connection)
-#             move_right()
-#             sleep(1)
-#             move_left()
-#             sleep(1)
-#             move_forward()
-#             sleep(1)
-#             move_backward()
-#             sleep(1)
 
