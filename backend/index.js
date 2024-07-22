@@ -99,8 +99,6 @@ const corsOptions = {
 APP.use(cors(corsOptions));
 APP.use(express.json());
 
-
-
 io.on("connection", (socket) => {
   console.log("Frontend connected to socket");
 
@@ -114,6 +112,11 @@ io.on("connection", (socket) => {
   socket.on('send-arm-value', (message) => {
     console.log('Received arm value message from frontend:', message);
     client.publish("arm", message.toString());
+  });
+
+  socket.on('send-pinch-value', (message) => {
+    console.log('Received pincher value message from frontend:', message);
+    client.publish("pinch", message.toString());
   });
 
   socket.on("disconnect", () => {
