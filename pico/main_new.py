@@ -17,7 +17,7 @@ from dht import DHT11
 dataPin = 16
 
 mypin= Pin(dataPin, Pin.OUT, Pin.PULL_DOWN)
-sensor =DHT11(mypin)
+sensor =DHT11(mypin) #temp sensor
 
 # Define pins to pin motors!
 #Mot_A_Forward = PWM(Pin(18, Pin.OUT))
@@ -133,8 +133,8 @@ def move_pinch(pwm_value):
         pwm_pinch.duty_ns(pwm_value*10**3)
 
 try:
-    from constants import WIFI_USER, WIFI_PWD, MQTT_PASS, MQTT_SERVER, MQTT_USER
-    print(WIFI_USER, WIFI_PWD, MQTT_PASS, MQTT_SERVER, MQTT_USER)
+    from constants import WIFI_USER, WIFI_PWD, MQTT_PWD, MQTT_SERVER, MQTT_USER
+    print(WIFI_USER, WIFI_PWD, MQTT_PWD, MQTT_SERVER, MQTT_USER)
 except:
 #     WIFI_USER="IEEE"
 #     WIFI_PWD="Ilovesolder"

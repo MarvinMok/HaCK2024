@@ -10,38 +10,37 @@ from hcsr04 import HCSR04
 from dht import DHT11
 
 
-# Yes, these could be in another file. But on the Pico! So no more secure. :)
-
-# Define pins to pin motors!
+# Define motor pins
 Mot_A_Forward = PWM(Pin(18, Pin.OUT))
 Mot_A_Back = PWM(Pin(19, Pin.OUT))
 Mot_B_Forward = PWM(Pin(20, Pin.OUT))
 Mot_B_Back = PWM(Pin(21, Pin.OUT))
 
-dataPin = 14
+# Define temperature/humidity sensor pin
+dataPin = 13
+temPin= Pin(dataPin, Pin.OUT, Pin.PULL_DOWN)
+tempSensor = DHT11(temPin)
 
-mypin= Pin(dataPin, Pin.OUT, Pin.PULL_DOWN)
-tempSensor = DHT11(mypin)
-
+# Define ultrasonic sensor pin
 ultraSensor = HCSR04(trigger_pin=16, echo_pin=17, echo_timeout_us=10000)
 
+# LED pin
 led = Pin('LED', Pin.OUT)
+
 FREQ = 1000
-SPEED = 65500 #0 to 2^16 -1
+SPEED = 65500 #0 to 2^16 -1, can be used for duty_u16
 
 def move_forward():
-    Mot_A_Forward.duty_u16(SPEED)
-    Mot_B_Forward.duty_u16(SPEED)
+    Mot_A_Forward.duty_u16(1)
+    Mot_B_Forward.duty_u16(1)
     Mot_A_Back.duty_u16(0)
     Mot_B_Back.duty_u16(0)
-
-    
+ 
 def move_backward():
     Mot_A_Forward.duty_u16(0)
     Mot_B_Forward.duty_u16(0)
-    Mot_A_Back.duty_u16(SPEED)
-    Mot_B_Back.duty_u16(SPEED)
-
+    Mot_A_Back.duty_u16(1)
+    Mot_B_Back.duty_u16(1)
 
 def move_stop():
     Mot_A_Forward.duty_u16(0)
@@ -49,48 +48,54 @@ def move_stop():
     Mot_A_Back.duty_u16(0)
     Mot_B_Back.duty_u16(0)
 
-
 def move_left():
-    Mot_A_Forward.duty_u16(SPEED)
+    Mot_A_Forward.duty_u16(1)
     Mot_B_Forward.duty_u16(0)
     Mot_A_Back.duty_u16(0)
-    Mot_B_Back.duty_u16(SPEED)
-
+    Mot_B_Back.duty_u16(1)
 
 def move_right():
     Mot_A_Forward.duty_u16(0)
-    Mot_B_Forward.duty_u16(SPEED)
-    Mot_A_Back.duty_u16(SPEED)
+    Mot_B_Forward.duty_u16(1)
+    Mot_A_Back.duty_u16(1)
     Mot_B_Back.duty_u16(0)
 
-def motor_setup():
-    Mot_A_Forward.freq(FREQ)
-    Mot_A_Back.freq(FREQ)
-    Mot_B_Forward.freq(FREQ)
-    Mot_B_Back.freq(FREQ)
+# def motor_setup():
+#     Mot_A_Forward.freq(FREQ)
+#     Mot_A_Back.freq(FREQ)
+#     Mot_B_Forward.freq(FREQ)
+#     Mot_B_Back.freq(FREQ)
 
 # ARM CONTROL
 
-PWM_MIN = 800
+PWM_MIN = 600
 PWM_MAX = 2400
 
-MIN = PWM_MIN*10**3
-MAX = PWM_MAX*10**3
+MIN = PWM_MIN #*10**3
+MAX = PWM_MAX #*10**3
 MID = 1500000
 
+# Arm control pin
 pwm = PWM(Pin(15))
+
+# Pincher control pin
+pwm_pinch = PWM(Pin(14))
 
 pwm.freq(50)
 
-
 # Arm control function
 def move_arm(pwm_value):
-    print('move called with value:', pwm_value)
+    # print('move called with value:', pwm_value)
     if pwm_value >= PWM_MIN and pwm_value <= PWM_MAX:
         pwm.duty_ns(pwm_value*10**3)
 
+# Pincher control function
+def move_pinch(pwm_value):
+    if pwm_value >= PWM_MIN and pwm_value <= PWM_MAX:
+        pwm_pinch.duty_ns(pwm_value*10**3)
+        
 try:
-    from constants import WIFI_USER, WIFI_PWD, MQTT_PASS, MQTT_SERVER, MQTT_USER
+    from constants import WIFI_USER, WIFI_PWD, MQTT_PWD, MQTT_SERVER, MQTT_USER
 except:
     WIFI_USER="IEEE"
     WIFI_PWD="Ilovesolder"
@@ -98,7 +103,6 @@ except:
     MQTT_USER="abcde"
     MQTT_PWD="12345Qaz"
     print("no constants")
-
 
 class sslWrap:
     def __init__(self):
@@ -132,7 +136,7 @@ def connectInternet(ssid, password):
     return ip
 
 def cb(topic, msg):
-    print("Callback triggered")
+    # print("Callback triggered")
     print(f"Topic: {topic}, Message: {msg}")
     if topic == b"direction":
         if msg == b"forward":
@@ -151,10 +155,12 @@ def cb(topic, msg):
             print("Stopping")
             move_stop()
     elif topic == b"arm":
-        print("Moving arm")
+        # print("Moving arm")
         move_arm(int(msg))
+    elif topic == b"pinch":
+        move_pinch(int(msg))
 
-    print(topic, ", ", msg)
+    # print(topic, ", ", msg)
 
 # try:
 #     motor_setup()
@@ -175,36 +181,52 @@ def cb(topic, msg):
 #     led.value(0)
 #     #machine.reset()
 
-try:
-    led.value(1)
-    ssid = WIFI_USER
-    password = WIFI_PWD
-    move_stop()
-    connectInternet(ssid, password)
-    client = connectMQTT()
-    client.set_callback(cb)
-    client.subscribe(b"direction")
-    client.subscribe(b"arm")
-    last_time = time.ticks_ms()
-    while True: 
-        cur_time = time.ticks_ms()
-        if time.ticks_diff(cur_time, last_time) > 1000:
-            tempSensor.measure()
-            tempC = tempSensor.temperature()
-            Humidity = tempSensor.humidity()
-            print(f"Temperature: {tempC}, Humidity: {Humidity}")
-            client.publish(b"temp", str(tempC).encode('utf-8'))
-            client.publish(b"humid", str(Humidity).encode('utf-8'))
+if __name__ == "__main__":
+    try:
+        # reset motors    
+        move_stop()
+        move_pinch(600)
+        move_arm(1700)
+        
+        # Wifi connection
+        ssid = WIFI_USER
+        password = WIFI_PWD
+        connectInternet(ssid, password)
+        
+        # MQTT connection and subscription
+        client = connectMQTT()
+        client.set_callback(cb)
+        client.subscribe(b"direction")
+        client.subscribe(b"arm")
+        client.subscribe(b"pinch")
+        led.value(1)
+        
+        last_time = time.ticks_ms()
+        while True: 
+            cur_time = time.ticks_ms()
+            if time.ticks_diff(cur_time, last_time) > 1000:
+                # Temperature and humidity sensor data
+                tempSensor.measure()
+                tempC = tempSensor.temperature()
+                Humidity = tempSensor.humidity()
+                print(f"Temperature: {tempC}, Humidity: {Humidity}")
+                client.publish(b"temp", str(tempC).encode('utf-8'))
+                client.publish(b"humid", str(Humidity).encode('utf-8'))
 
-            distance = ultraSensor.distance_cm()
-            print(f"Ultrasonic Distance: {distance} cm")  # Debug print for sensor data
-            client.publish(b"ultrasonic", str(distance).encode('utf-8'))
-            last_time = cur_time
-        client.check_msg()
-        sleep(0.01)
-        # client.publish(b"ultrasonic", b"hello world")
-finally:
-    # client.disconnect()
-    move_stop()
-    led.value(0)
-    # machine.reset()
+                # Ultrasonic sensor data
+                distance = ultraSensor.distance_cm()
+                print(f"Ultrasonic Distance: {distance} cm")  # Debug print for sensor data
+                client.publish(b"ultrasonic", str(distance).encode('utf-8'))
+                last_time = cur_time
+            client.check_msg()
+            sleep(0.01)
+    
+    except KeyboardInterrupt:
+            print("exit")
+    
+    finally:
+        # client.disconnect()
+        move_arm(1700)
+        move_pinch(600)
+        move_stop()
+        led.value(0)
