@@ -6,9 +6,6 @@ import io from 'socket.io-client';
 const socket = io('http://localhost:8000');
 
 const App = () => {
-
-  // const [ultrasonic, setUltrasonic] = useState("-1");
-  // const [temp, setTemp] = useState("-1");
   const keydown = useRef(false);
   const [value, setValue] = useState(1700);
   const [pinchValue, setPinchValue] = useState(600)
@@ -19,25 +16,6 @@ const App = () => {
   const handlePinchChange = (newValue) => {
     setPinchValue(newValue);
   }
-
-  // useEffect( () )
-
-  // Slider change once released
-  // const sendArmValue = async (newValue) => {
-  //   try {
-  //     const response = await fetch('http://localhost:8000/send-arm-value', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({ topic: "arm", message: newValue }),
-  //     });
-  //     const data = await response.json();
-  //     console.log('Response from server:', data);
-  //   } catch (error) {
-  //     console.error('Error sending message:', error);
-  //   }
-  // };
 
   const [temp, setTemp] = useState(null);
   const [ultrasonic, setUltrasonic] = useState(null);
@@ -70,27 +48,6 @@ const App = () => {
   const sendPinchValue = (value) => {
     socket.emit('send-pinch-value', value);
   }
- 
-  // For Receving Message
-  // Will be used for sensor data
-  // useEffect(() => {
-  //   fetch("http://localhost:8000/temp")
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       if( temp !== data.temp ) {
-  //         setTemp(data.temp);
-  //       }
-  //     });
-  // }, []);
-  // useEffect(() => {
-  //   fetch("http://localhost:8000/ultrasonic")
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       if( ultrasonic !== data.ultrasonic ) {
-  //         setUltrasonic(data.ultrasonic);
-  //       }
-  //     });
-  // }, []);
 
 
   // Controls for Rover
@@ -145,93 +102,6 @@ const App = () => {
         window.removeEventListener('keyup', handleKeyUp);
       };
   }, []);
-
-
-
-  // Functions to send message to broker thru server
-
-  // const sendStop = async () => {
-  //   try {
-  //     const response = await fetch('http://localhost:8000/send-direction', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({ topic: "direction", message: "stop" }),
-  //     });
-  //     const data = await response.json();
-  //     console.log('Response from server:', data);
-  //   } catch (error) {
-  //     console.error('Error sending message:', error);
-  //   }
-  // };
-
-  // const sendLeft = async () => {
-  //   try {
-  //     const response = await fetch('http://localhost:8000/send-direction', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({ topic: "direction", message: "left" }),
-  //     });
-  //     const data = await response.json();
-  //     console.log('Response from server:', data);
-  //   } catch (error) {
-  //     console.error('Error sending message:', error);
-  //   }
-  // };
-
-
-  // const sendRight = async () => {
-  //   try {
-  //     const response = await fetch('http://localhost:8000/send-direction', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({ topic: "direction", message: "right" }),
-  //     });
-  //     const data = await response.json();
-  //     console.log('Response from server:', data);
-  //   } catch (error) {
-  //     console.error('Error sending message:', error);
-  //   }
-  // };
-
-  // const sendBackward = async () => {
-  //   try {
-  //     const response = await fetch('http://localhost:8000/send-direction', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({ topic: "direction", message: "backward" }),
-  //     });
-  //     const data = await response.json();
-  //     console.log('Response from server:', data);
-  //   } catch (error) {
-  //     console.error('Error sending message:', error);
-  //   }
-  // };
-
-  // const sendForward = async () => {
-  //   try {
-  //     const response = await fetch('http://localhost:8000/send-direction', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({ topic: "direction", message: "forward" }),
-  //     });
-  //     const data = await response.json();
-  //     console.log('Response from server:', data);
-  //   } catch (error) {
-  //     console.error('Error sending message:', error);
-  //   }
-  // };
-
-
 
 
 
