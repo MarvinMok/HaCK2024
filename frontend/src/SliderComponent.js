@@ -10,7 +10,7 @@ const SliderComponent = ({ min, max, value, onChange, onAfterChange }) => {
           max={max}
           value={value}
           onChange={onChange}
-          onAfterChange={onAfterChange}
+          // onAfterChange={onAfterChange}
           style={{width: `80%`, margin: `0 auto`}}
         />
         <p>Value: {value}</p>

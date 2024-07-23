@@ -7,144 +7,102 @@ import utime
 import ssl
 from simple import MQTTClient
 from hcsr04 import HCSR04
-
-
-
-# Yes, these could be in another file. But on the Pico! So no more secure. :)
-# Humidity sensor
 from dht import DHT11
 
-dataPin = 16
 
-mypin= Pin(dataPin, Pin.OUT, Pin.PULL_DOWN)
-sensor =DHT11(mypin) #temp sensor
+# Define motor pins
+Mot_A_Forward = PWM(Pin(18, Pin.OUT))
+Mot_A_Back = PWM(Pin(19, Pin.OUT))
+Mot_B_Forward = PWM(Pin(20, Pin.OUT))
+Mot_B_Back = PWM(Pin(21, Pin.OUT))
 
-# Define pins to pin motors!
-#Mot_A_Forward = PWM(Pin(18, Pin.OUT))
-#Mot_A_Back = PWM(Pin(19, Pin.OUT))
-#Mot_B_Forward = PWM(Pin(20, Pin.OUT))
-#Mot_B_Back = PWM(Pin(21, Pin.OUT))
+# Define temperature/humidity sensor pin
+dataPin = 12
+temPin= Pin(dataPin, Pin.OUT, Pin.PULL_DOWN)
+tempSensor = DHT11(temPin)
 
-Mot_A_Forward = Pin(18, Pin.OUT)
-Mot_A_Back = Pin(19, Pin.OUT)
-Mot_B_Forward = Pin(20, Pin.OUT)
-Mot_B_Back = Pin(21, Pin.OUT)
+# Define ultrasonic sensor pin
+ultraSensor = HCSR04(trigger_pin=16, echo_pin=17, echo_timeout_us=10000)
 
-ultraSensor = HCSR04(trigger_pin=16, echo_pin=15, echo_timeout_us=10000)
-
+# LED pin
 led = Pin('LED', Pin.OUT)
+
 FREQ = 1000
-SPEED = 65500 #0 to 2^16 -1
+SPEED = 65500 #0 to 2^16 -1, can be used for duty_u16
 
 def move_forward():
-    Mot_A_Forward.value(1)
-    Mot_B_Forward.value(1)
-    Mot_A_Back.value(0)
-    Mot_B_Back.value(0)
-    
+    Mot_A_Forward.duty_u16(SPEED)
+    Mot_B_Forward.duty_u16(SPEED)
+    Mot_A_Back.duty_u16(0)
+    Mot_B_Back.duty_u16(0)
+ 
 def move_backward():
-    Mot_A_Forward.value(0)
-    Mot_B_Forward.value(0)
-    Mot_A_Back.value(1)
-    Mot_B_Back.value(1)
+    Mot_A_Forward.duty_u16(0)
+    Mot_B_Forward.duty_u16(0)
+    Mot_A_Back.duty_u16(SPEED)
+    Mot_B_Back.duty_u16(SPEED)
 
 def move_stop():
-    Mot_A_Forward.value(0)
-    Mot_B_Forward.value(0)
-    Mot_A_Back.value(0)
-    Mot_B_Back.value(0)
+    Mot_A_Forward.duty_u16(0)
+    Mot_B_Forward.duty_u16(0)
+    Mot_A_Back.duty_u16(0)
+    Mot_B_Back.duty_u16(0)
 
 def move_left():
-    Mot_A_Forward.value(1)
-    Mot_B_Forward.value(0)
-    Mot_A_Back.value(0)
-    Mot_B_Back.value(1)
+    Mot_A_Forward.duty_u16(SPEED)
+    Mot_B_Forward.duty_u16(0)
+    Mot_A_Back.duty_u16(0)
+    Mot_B_Back.duty_u16(SPEED)
 
 def move_right():
-    Mot_A_Forward.value(0)
-    Mot_B_Forward.value(1)
-    Mot_A_Back.value(1)
-    Mot_B_Back.value(0)
-    
-# def move_forward():
-#     Mot_A_Forward.duty_u16(SPEED)
-#     Mot_B_Forward.duty_u16(SPEED)
-#     Mot_A_Back.duty_u16(0)
-#     Mot_B_Back.duty_u16(0)
-# 
-#     
-# def move_backward():
-#     
-#     Mot_A_Forward.duty_u16(0)
-#     Mot_B_Forward.duty_u16(0)
-#     Mot_A_Back.duty_u16(SPEED)
-#     Mot_B_Back.duty_u16(SPEED)
-# 
-# 
-# def move_stop():
-#     Mot_A_Forward.duty_u16(0)
-#     Mot_B_Forward.duty_u16(0)
-#     Mot_A_Back.duty_u16(0)
-#     Mot_B_Back.duty_u16(0)
-# 
-# 
-# def move_left():
-#     Mot_A_Forward.duty_u16(SPEED)
-#     Mot_B_Forward.duty_u16(0)
-#     Mot_A_Back.duty_u16(0)
-#     Mot_B_Back.duty_u16(SPEED)
-# 
-# 
-# def move_right():
-#     Mot_A_Forward.duty_u16(0)
-#     Mot_B_Forward.duty_u16(SPEED)
-#     Mot_A_Back.duty_u16(SPEED)
-#     Mot_B_Back.duty_u16(0)
-# 
-# def motor_setup():
-#     Mot_A_Forward.freq(FREQ)
-#     Mot_A_Back.freq(FREQ)
-#     Mot_B_Forward.freq(FREQ)
-#     Mot_B_Back.freq(FREQ)
+    Mot_A_Forward.duty_u16(0)
+    Mot_B_Forward.duty_u16(SPEED)
+    Mot_A_Back.duty_u16(SPEED)
+    Mot_B_Back.duty_u16(0)
+
+def motor_setup():
+    Mot_A_Forward.freq(FREQ)
+    Mot_A_Back.freq(FREQ)
+    Mot_B_Forward.freq(FREQ)
+    Mot_B_Back.freq(FREQ)
 
 # ARM CONTROL
 
 PWM_MIN = 600
 PWM_MAX = 2400
 
-MIN = PWM_MIN#*10**3
-MAX = PWM_MAX#*10**3
+MIN = PWM_MIN #*10**3
+MAX = PWM_MAX #*10**3
 MID = 1500000
 
+# Arm control pin
 pwm = PWM(Pin(15))
+
+# Pincher control pin
 pwm_pinch = PWM(Pin(14))
 
 pwm.freq(50)
 
-
 # Arm control function
 def move_arm(pwm_value):
-    #print('move called with value:', pwm_value)
+    # print('move called with value:', pwm_value)
     if pwm_value >= PWM_MIN and pwm_value <= PWM_MAX:
         pwm.duty_ns(pwm_value*10**3)
-        
+
+# Pincher control function
 def move_pinch(pwm_value):
     if pwm_value >= PWM_MIN and pwm_value <= PWM_MAX:
         pwm_pinch.duty_ns(pwm_value*10**3)
-
+        
 try:
     from constants import WIFI_USER, WIFI_PWD, MQTT_PWD, MQTT_SERVER, MQTT_USER
-    print(WIFI_USER, WIFI_PWD, MQTT_PWD, MQTT_SERVER, MQTT_USER)
 except:
-#     WIFI_USER="IEEE"
-#     WIFI_PWD="Ilovesolder"
-    WIFI_USER="ATTWyFVWyV"
-    WIFI_PWD="hcga2x7gkmrc"
-    MQTT_SERVER="378861656db74bd1becac997eb01cb13.s1.eu.hivemq.cloud"
-    MQTT_USER="picow"
-    MQTT_PWD="Raspberry1"
+    WIFI_USER="IEEE"
+    WIFI_PWD="Ilovesolder"
+    MQTT_SERVER="b336487b99734211867870bc957c5a4f.s1.eu.hivemq.cloud"
+    MQTT_USER="abcde"
+    MQTT_PWD="12345Qaz"
     print("no constants")
-
 
 class sslWrap:
     def __init__(self):
@@ -209,7 +167,7 @@ def cb(topic, msg):
 #     led.value(1)
 #     while True:
 #         move_stop()
-#         sleep(1)
+#         sleep(2)
 #         move_forward()
 #         sleep(1)
 #         move_backward()
@@ -222,12 +180,13 @@ def cb(topic, msg):
 #     move_stop()
 #     led.value(0)
 #     #machine.reset()
+
 if __name__ == "__main__":
     try:
         # reset motors    
         move_stop()
-        move_pinch(600)
-        move_arm(1700)
+        move_pinch(1500)
+        move_arm(1000)
         
         # Wifi connection
         ssid = WIFI_USER
@@ -242,37 +201,36 @@ if __name__ == "__main__":
         client.subscribe(b"pinch")
         led.value(1)
         
-        # cycle counter for sensor
-        cycle = 0
+        last_time = time.ticks_ms()
         while True: 
-            # cur_time = time.ticks_ms()
-            # if (time.ticks_diff(cur_time, last_time) > 1000):
-            #     client.publish(b"ultrasonic", str(ultraSensor.distance_cm()).encode('utf-8'))
-            #     last_time = cur_time
+            cur_time = time.ticks_ms()
+            if time.ticks_diff(cur_time, last_time) > 1000:
+                # Temperature and humidity sensor data
+                try:
+                    tempSensor.measure()
+                    tempC = tempSensor.temperature()
+                    Humidity = tempSensor.humidity()
+                    print(f"Temperature: {tempC}, Humidity: {Humidity}")
+                    client.publish(b"temp", str(tempC).encode('utf-8'))
+                    client.publish(b"humid", str(Humidity).encode('utf-8'))
+                except Exception as e:
+                    print(f"Failed to measure temperature and humidity: {e}")
+
+                # Ultrasonic sensor data
+                distance = ultraSensor.distance_cm()
+                print(f"Ultrasonic Distance: {distance} cm")  # Debug print for sensor data
+                client.publish(b"ultrasonic", str(distance).encode('utf-8'))
+                last_time = cur_time
             client.check_msg()
             sleep(0.01)
-#             if cycle == 300:
-#                 sensor.measure()
-#                 tempC = str(sensor.temperature())
-#                 humidity = str(sensor.humidity())
-#                 print(f"temp: {tempC}, Humidity: {Humidity}")
-#                 client.publish(b"temp", tempC)
-#                 client.publish(b"ultrasonic", b"hello world")
-#                 cycle = 0
-#             else:
-#                 cycle += 1
-#             
-            
+    
     except KeyboardInterrupt:
             print("exit")
+    
     finally:
         # client.disconnect()
-        move_arm(1700)
-        move_pinch(600)
+        move_arm(1000)
+        move_pinch(1500)
         move_stop()
         led.value(0)
-
-    
-    
-
 

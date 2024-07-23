@@ -17,7 +17,7 @@ Mot_B_Forward = PWM(Pin(20, Pin.OUT))
 Mot_B_Back = PWM(Pin(21, Pin.OUT))
 
 # Define temperature/humidity sensor pin
-dataPin = 13
+dataPin = 12
 temPin= Pin(dataPin, Pin.OUT, Pin.PULL_DOWN)
 tempSensor = DHT11(temPin)
 
@@ -31,16 +31,16 @@ FREQ = 1000
 SPEED = 65500 #0 to 2^16 -1, can be used for duty_u16
 
 def move_forward():
-    Mot_A_Forward.duty_u16(1)
-    Mot_B_Forward.duty_u16(1)
+    Mot_A_Forward.duty_u16(SPEED)
+    Mot_B_Forward.duty_u16(SPEED)
     Mot_A_Back.duty_u16(0)
     Mot_B_Back.duty_u16(0)
  
 def move_backward():
     Mot_A_Forward.duty_u16(0)
     Mot_B_Forward.duty_u16(0)
-    Mot_A_Back.duty_u16(1)
-    Mot_B_Back.duty_u16(1)
+    Mot_A_Back.duty_u16(SPEED)
+    Mot_B_Back.duty_u16(SPEED)
 
 def move_stop():
     Mot_A_Forward.duty_u16(0)
@@ -49,22 +49,22 @@ def move_stop():
     Mot_B_Back.duty_u16(0)
 
 def move_left():
-    Mot_A_Forward.duty_u16(1)
+    Mot_A_Forward.duty_u16(SPEED)
     Mot_B_Forward.duty_u16(0)
     Mot_A_Back.duty_u16(0)
-    Mot_B_Back.duty_u16(1)
+    Mot_B_Back.duty_u16(SPEED)
 
 def move_right():
     Mot_A_Forward.duty_u16(0)
-    Mot_B_Forward.duty_u16(1)
-    Mot_A_Back.duty_u16(1)
+    Mot_B_Forward.duty_u16(SPEED)
+    Mot_A_Back.duty_u16(SPEED)
     Mot_B_Back.duty_u16(0)
 
-# def motor_setup():
-#     Mot_A_Forward.freq(FREQ)
-#     Mot_A_Back.freq(FREQ)
-#     Mot_B_Forward.freq(FREQ)
-#     Mot_B_Back.freq(FREQ)
+def motor_setup():
+    Mot_A_Forward.freq(FREQ)
+    Mot_A_Back.freq(FREQ)
+    Mot_B_Forward.freq(FREQ)
+    Mot_B_Back.freq(FREQ)
 
 # ARM CONTROL
 
@@ -167,7 +167,7 @@ def cb(topic, msg):
 #     led.value(1)
 #     while True:
 #         move_stop()
-#         sleep(1)
+#         sleep(2)
 #         move_forward()
 #         sleep(1)
 #         move_backward()
@@ -183,10 +183,11 @@ def cb(topic, msg):
 
 if __name__ == "__main__":
     try:
-        # reset motors    
+        # reset motors
+        motor_setup()
         move_stop()
-        move_pinch(600)
-        move_arm(1700)
+        move_pinch(1500)
+        move_arm(1000)
         
         # Wifi connection
         ssid = WIFI_USER
@@ -206,12 +207,15 @@ if __name__ == "__main__":
             cur_time = time.ticks_ms()
             if time.ticks_diff(cur_time, last_time) > 1000:
                 # Temperature and humidity sensor data
-                tempSensor.measure()
-                tempC = tempSensor.temperature()
-                Humidity = tempSensor.humidity()
-                print(f"Temperature: {tempC}, Humidity: {Humidity}")
-                client.publish(b"temp", str(tempC).encode('utf-8'))
-                client.publish(b"humid", str(Humidity).encode('utf-8'))
+                try:
+                    tempSensor.measure()
+                    tempC = tempSensor.temperature()
+                    Humidity = tempSensor.humidity()
+                    print(f"Temperature: {tempC}, Humidity: {Humidity}")
+                    client.publish(b"temp", str(tempC).encode('utf-8'))
+                    client.publish(b"humid", str(Humidity).encode('utf-8'))
+                except Exception as e:
+                    print(f"Failed to measure temperature and humidity: {e}")
 
                 # Ultrasonic sensor data
                 distance = ultraSensor.distance_cm()
@@ -226,7 +230,7 @@ if __name__ == "__main__":
     
     finally:
         # client.disconnect()
-        move_arm(1700)
-        move_pinch(600)
+        move_arm(1000)
+        move_pinch(1500)
         move_stop()
         led.value(0)

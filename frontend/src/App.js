@@ -17,11 +17,21 @@ const App = () => {
   const [value, setValue] = useState(1700);
   const [pinchValue, setPinchValue] = useState(600)
   // constand changing slider value
+  // const handleArmChange = (newValue) => {
+  //   setValue(newValue);
+  // };
+  // const handlePinchChange = (newValue) => {
+  //   setPinchValue(newValue);
+  // };
+
   const handleArmChange = (newValue) => {
     setValue(newValue);
+    socket.emit('send-arm-value', newValue);
   };
+  
   const handlePinchChange = (newValue) => {
     setPinchValue(newValue);
+    socket.emit('send-pinch-value', newValue);
   };
 
   const appendUltrasonicData = (dataPoint) => {
@@ -216,10 +226,10 @@ const App = () => {
         <h1>Arm Slider</h1>
         <SliderComponent
           min={950}
-          max={1700}
+          max={1600}
           value={value}
           onChange={handleArmChange}
-          onAfterChange={sendArmValue}
+          // onAfterChange={sendArmValue}
         />
       </div>
       <div >
@@ -229,7 +239,7 @@ const App = () => {
           max={1800}
           value={pinchValue}
           onChange={handlePinchChange}
-          onAfterChange={sendPinchValue}
+          // onAfterChange={sendPinchValue}
         />
       </div>
       <h1>Control Rover</h1>
