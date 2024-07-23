@@ -22,7 +22,8 @@ temPin= Pin(dataPin, Pin.OUT, Pin.PULL_DOWN)
 tempSensor = DHT11(temPin)
 
 # Define ultrasonic sensor pin
-ultraSensor = HCSR04(trigger_pin=16, echo_pin=17, echo_timeout_us=10000)
+ultraSensorRight = HCSR04(trigger_pin=16, echo_pin=17, echo_timeout_us=10000)
+ultraSensorLeft = HCSR04(trigger_pin=10, echo_pin=11, echo_timeout_us=10000)
 
 # LED pin
 led = Pin('LED', Pin.OUT)
@@ -218,9 +219,12 @@ if __name__ == "__main__":
                     print(f"Failed to measure temperature and humidity: {e}")
 
                 # Ultrasonic sensor data
-                distance = ultraSensor.distance_cm()
-                print(f"Ultrasonic Distance: {distance} cm")  # Debug print for sensor data
-                client.publish(b"ultrasonic", str(distance).encode('utf-8'))
+                distanceRight = ultraSensorRight.distance_cm()
+                distanceLeft = ultraSensorLeft.distance_cm()
+                print(f"Right Ultrasonic Distance: {distanceRight} cm")
+                print(f"Left Ultrasonic Distance: {distanceLeft} cm")
+                client.publish(b"ultrasonic_right", str(distanceRight).encode('utf-8'))
+                client.publish(b"ultrasonic_left", str(distanceLeft).encode('utf-8'))
                 last_time = cur_time
             client.check_msg()
             sleep(0.01)

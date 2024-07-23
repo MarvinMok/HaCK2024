@@ -7,10 +7,12 @@ import "./App.css";
 const socket = io('http://localhost:8000');
 
 const App = () => {
-  const [ultrasonicData, setUltrasonicData] = useState([]);
+  const [ultrasonicDataRight, setUltrasonicDataRight] = useState([]);
+  const [ultrasonicDataLeft, setUltrasonicDataLeft] = useState([]);
   const [tempData, setTempData] = useState([]);
   const [humidData, setHumidData] = useState([]);
-  const [latestUltrasonic, setLatestUltrasonic] = useState(null);
+  const [latestUltrasonicRight, setLatestUltrasonicRight] = useState(null);
+  const [latestUltrasonicLeft, setLatestUltrasonicLeft] = useState(null);
   const [latestTemp, setLatestTemp] = useState(null);
   const [latestHumid, setLatestHumid] = useState(null);
   const keydown = useRef(false);
@@ -34,17 +36,30 @@ const App = () => {
     socket.emit('send-pinch-value', newValue);
   };
 
-  const appendUltrasonicData = (dataPoint) => {
+  const appendUltrasonicDataRight = (dataPoint) => {
     const pacificTime = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
     const dateInPT = new Date(pacificTime);
-    setUltrasonicData(prevData => {
+    setUltrasonicDataRight(prevData => {
       const newData = [...prevData, { x: dateInPT.getTime(), y: parseFloat(dataPoint) }];
       if (newData.length > 20) {
         newData.shift();
       }
       return newData;
     });
-    setLatestUltrasonic(dataPoint);
+    setLatestUltrasonicRight(dataPoint);
+  };
+
+  const appendUltrasonicDataLeft = (dataPoint) => {
+    const pacificTime = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
+    const dateInPT = new Date(pacificTime);
+    setUltrasonicDataLeft(prevData => {
+      const newData = [...prevData, { x: dateInPT.getTime(), y: parseFloat(dataPoint) }];
+      if (newData.length > 20) {
+        newData.shift();
+      }
+      return newData;
+    });
+    setLatestUltrasonicLeft(dataPoint);
   };
 
   const appendTempData = (dataPoint) => {
@@ -74,9 +89,14 @@ const App = () => {
   };
 
   useEffect(() => {
-    socket.on('ultrasonic', (data) => {
-      console.log('Received ultrasonic data:', data);
-      appendUltrasonicData(data);
+    socket.on('ultrasonic_right', (data) => {
+      console.log('Received right ultrasonic data:', data);
+      appendUltrasonicDataRight(data);
+    });
+  
+    socket.on('ultrasonic_left', (data) => {
+      console.log('Received left ultrasonic data:', data);
+      appendUltrasonicDataLeft(data);
     });
 
     socket.on('temp', (data) => {
@@ -94,7 +114,8 @@ const App = () => {
     });
 
     return () => {
-      socket.off('ultrasonic');
+      socket.off('ultrasonic_right');
+      socket.off('ultrasonic_left');
       socket.off('temp');
       socket.off('humid');
     };
@@ -162,10 +183,17 @@ const App = () => {
     };
   }, []);
 
-  const ultrasonicSeries = [
+  const ultrasonicSeriesRight = [
     {
-      name: 'Ultrasonic Sensor',
-      data: ultrasonicData
+      name: 'Right Ultrasonic Sensor',
+      data: ultrasonicDataRight
+    }
+  ];
+  
+  const ultrasonicSeriesLeft = [
+    {
+      name: 'Left Ultrasonic Sensor',
+      data: ultrasonicDataLeft
     }
   ];
 
@@ -257,10 +285,17 @@ const App = () => {
           style={{ border: '1px solid black' }}
         ></iframe>
       </div>
-      <div>
-        <h1>Ultrasonic Sensor Data</h1>
-        <p>Current Reading: {latestUltrasonic} cm</p>
-        <Chart series={ultrasonicSeries} options={chartOptions} height={350} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 20px' }}>
+        <div style={{ flex: 1, marginRight: '10px' }}>
+          <h1>Left Ultrasonic Sensor Data</h1>
+          <p>Current Reading: {latestUltrasonicLeft} cm</p>
+          <Chart series={ultrasonicSeriesLeft} options={chartOptions} height={350} />
+        </div>
+        <div style={{ flex: 1, marginLeft: '10px' }}>
+          <h1>Right Ultrasonic Sensor Data</h1>
+          <p>Current Reading: {latestUltrasonicRight} cm</p>
+          <Chart series={ultrasonicSeriesRight} options={chartOptions} height={350} />
+        </div>
       </div>
       <div>
         <h1>Temperature Sensor Data</h1>

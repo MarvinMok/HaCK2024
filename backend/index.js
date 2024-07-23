@@ -51,11 +51,19 @@ client.on("reconnect", function () {
 client.on('connect', async () => {
   console.log("Connected");
 
-  client.subscribe("ultrasonic", (err) => {
+  client.subscribe("ultrasonic_right", (err) => {
     if (err) {
-      console.error("Subscription error for 'ultrasonic': ", err);
+      console.error("Subscription error for 'ultrasonic_right': ", err);
     } else {
-      console.log("Subscribed to 'ultrasonic'");
+      console.log("Subscribed to 'ultrasonic_right'");
+    }
+  });
+
+  client.subscribe("ultrasonic_left", (err) => {
+    if (err) {
+      console.error("Subscription error for 'ultrasonic_left': ", err);
+    } else {
+      console.log("Subscribed to 'ultrasonic_left'");
     }
   });
 
@@ -79,9 +87,11 @@ client.on('connect', async () => {
 client.on('message', (TOPIC, payload) => {
   console.log("Received from broker:", TOPIC, payload.toString());
   
-  if ( TOPIC === 'ultrasonic' ) {
-    // latestUltrasonic = payload.toString();
-    io.emit('ultrasonic', payload.toString());
+  if (TOPIC === 'ultrasonic_right') {
+    io.emit('ultrasonic_right', payload.toString());
+  }
+  else if (TOPIC === 'ultrasonic_left') {
+    io.emit('ultrasonic_left', payload.toString());
   }
   else if( TOPIC === 'temp' ) {
     io.emit('temp', payload.toString());
